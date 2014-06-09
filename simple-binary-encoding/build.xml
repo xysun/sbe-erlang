@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="Real-Logic-SBE" default="all" basedir="." xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+
+    <property name="classpath" location="/usr/share/java/jaxp_parser_impl.jar" />
+
+    <property file="build.properties"/>
+    <property name="module.name" value="sbe"/>
+    <property name="dir.main.src" location="main/java"/>
+    <property name="dir.main.build" location="target/main/java/classes"/>
+
+    <property name="dir.test.src" location="test/java"/>
+    <property name="dir.test.build" location="target/test/java/classes"/>
+    <property name="dir.test.lib" location="test/lib"/>
+
+    <property name="dir.reports" location="target/reports"/>
+
+    <property name="dir.reports.unit" location="target/reports/unit"/>
+    <property name="dir.dist" location="target/dist"/>
+    <property name="dir.main.resources" location="main/resources"/>
+    <property name="dir.test.resources" location="test/resources"/>
+
+    <property name="dir.reports.checkstyle" location="target/reports/checkstyle"/>
+    <property name="checkstyle.lib" location="test/lib/checkstyle-5.6-all.jar"/>
+    <property name="checkstyle.config.file" location="test/conf/checkstyle.xml"/>
+    <property name="checkstyle.output.file" location="${dir.reports.checkstyle}/results.xml"/>
+
+    <property name="dir.docs.java" value="target/docs/java"/>
+    <property name="dir.docs.cpp" value="target/docs/cpp"/>
+
+    <property name="cpptasks.lib" location="main/lib/cpptasks-1.0b5.jar"/>
+    <property name="doxygen.lib" location="main/lib/ant-doxygen-1.6.1.jar"/>
+    <property name="maven-ant-tasks.lib" location="main/lib/maven-ant-tasks-2.1.3.jar"/>
+
+    <property name="dir.main.cpp.src" location="main/cpp"/>
+    <property name="dir.main.cpp.build" location="target/main/cpp/obj"/>
+    <property name="dir.gtest.src" location="target/test/cpp/gtest-1.7.0"/>
+    <property name="dir.gtest.include" location="target/test/cpp/gtest-1.7.0/include"/>
+    <property name="dir.gtest.build" location="target/test/cpp/gtest/obj"/>
+    <property name="dir.test.cpp.src" location="test/cpp"/>
+    <property name="dir.test.cpp.include" location="test/cpp"/>
+    <property name="dir.exec.test.cpp" location="target/test/cpp"/>
+    <property name="exec.test.cpp" location="${dir.exec.test.cpp}/gtest-runner"/>
+
+    <property name="dir.main.csharp.src" location="main/csharp/ir/generated"/>
+
+    <property name="jar" value="${dir.dist}/${module.name}-${build.version}.jar"/>
+    <property name="javadoc.jar" value="${dir.dist}/${module.name}-${build.version}-javadoc.jar"/>
+    <property name="sources.jar" value="${dir.dist}/${module.name}-${build.version}-sources.jar"/>
+
+    <property name="ossrh.snapshots.repository.url" value="https://oss.sonatype.org/content/repositories/snapshots"/>
+    <property name="ossrh.staging.repository.url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2"/>
+    <property name="ossrh.server.id" value="ossrh"/>
+
+    <path id="test.classpath">
+        <pathelement path="${dir.main.build}"/>
+        <pathelement path="${dir.test.build}"/>
+        <pathelement path="${dir.test.resources}"/>
+        <fileset dir="${dir.test.lib}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <taskdef resource="checkstyletask.properties" classpath="${checkstyle.lib}"/>
+    <taskdef resource="cpptasks.tasks" classpath="${cpptasks.lib}"/>
+    <taskdef resource="cpptasks.types" classpath="${cpptasks.lib}"/>
+    <taskdef resource="org/doxygen/tools/antlib.xml" classpath="${doxygen.lib}"/>
+    <typedef resource="org/apache/maven/artifact/ant/antlib.xml"
+             uri="antlib:org.apache.maven.artifact.ant"
+             classpath="${maven-ant-tasks.lib}"/>
+
+    <target name="init">
+        <tstamp/>
+        <mkdir dir="${dir.main.build}"/>
+        <mkdir dir="${dir.test.build}"/>
+        <mkdir dir="${dir.dist}"/>
+        <mkdir dir="${dir.docs.java}"/>
+        <mkdir dir="${dir.docs.cpp}"/>
+        <mkdir dir="${dir.reports}"/>
+        <mkdir dir="${dir.reports.unit}"/>
+        <mkdir dir="${dir.reports.checkstyle}"/>
+        <mkdir dir="${dir.main.cpp.build}"/>
+        <mkdir dir="${dir.gtest.build}"/>
+        <condition property="windows">
+            <os family="windows"/>
+        </condition>
+    </target>
+
+    <artifact:pom id="sbe.pom" file="sbe-pom.xml"/>
+
+    <target name="maven.install" depends="clean, checkstyle, build, test, javadoc, dist" description="maven install">
+        <artifact:install file="${jar}">
+            <artifact:pom refid="sbe.pom"/>
+            <artifact:attach file="${sources.jar}" type="jar" classifier="sources"/>
+            <artifact:attach file="${javadoc.jar}" type="jar" classifier="javadoc"/>
+        </artifact:install>
+    </target>
+
+    <target name="maven.deploy" depends="clean, checkstyle, build, test, javadoc, dist" description="maven deploy">
+        <artifact:mvn>
+            <artifact:arg value="org.apache.maven.plugins:maven-deploy-plugin:2.6:deploy-file"/>
+            <artifact:arg value="-Durl=${ossrh.snapshots.repository.url}" />
+            <artifact:arg value="-DrepositoryId=${ossrh.server.id}" />
+            <artifact:arg value="-DpomFile=sbe-pom.xml" />
+            <artifact:arg value="-Dfile=${jar}" />
+        </artifact:mvn>
+    </target>
+
+    <target name="maven.stage" depends="clean, checkstyle, build, test, javadoc, dist" description="maven stage">
+        <artifact:mvn>
+            <artifact:arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file"/>
+            <artifact:arg value="-Durl=${ossrh.staging.repository.url}" />
+            <artifact:arg value="-DrepositoryId=${ossrh.server.id}" />
+            <artifact:arg value="-DpomFile=sbe-pom.xml" />
+            <artifact:arg value="-Dfile=${jar}" />
+            <artifact:arg value="-Pgpg"/>
+        </artifact:mvn>
+        <artifact:mvn>
+            <artifact:arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file"/>
+            <artifact:arg value="-Durl=${ossrh.staging.repository.url}" />
+            <artifact:arg value="-DrepositoryId=${ossrh.server.id}" />
+            <artifact:arg value="-DpomFile=sbe-pom.xml" />
+            <artifact:arg value="-Dfile=${sources.jar}" />
+            <artifact:arg value="-Dclassifier=sources"/>
+            <artifact:arg value="-Pgpg"/>
+        </artifact:mvn>
+        <artifact:mvn>
+            <artifact:arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file"/>
+            <artifact:arg value="-Durl=${ossrh.staging.repository.url}" />
+            <artifact:arg value="-DrepositoryId=${ossrh.server.id}" />
+            <artifact:arg value="-DpomFile=sbe-pom.xml" />
+            <artifact:arg value="-Dfile=${javadoc.jar}" />
+            <artifact:arg value="-Dclassifier=javadoc"/>
+            <artifact:arg value="-Pgpg"/>
+        </artifact:mvn>
+    </target>
+
+    <target name="checkstyle" depends="init">
+        <checkstyle config="${checkstyle.config.file}"
+                    failOnViolation="true"
+                    maxWarnings="0"
+                    maxErrors="0">
+            <fileset dir="${dir.main.src}">
+                <include name="**/*.java"/>
+                <exclude name="**/ir/generated/**"/>
+            </fileset>
+            <fileset dir="${dir.test.src}">
+                <include name="**/*.java"/>
+            </fileset>
+            <formatter type="plain"/>
+            <formatter type="xml" tofile="${checkstyle.output.file}"/>
+        </checkstyle>
+    </target>
+
+    <target name="clean" description="Delete all existing output">
+        <delete dir="target"/>
+    </target>
+
+    <target name="build" depends="init" description="Build the main source">
+        <javac srcdir="${dir.main.src}" destdir="${dir.main.build}" includeAntRuntime="false" debug="true" source="1.7" target="1.7">
+            <compilerarg value="-Xlint:unchecked"/>
+            <compilerarg value="-XDignore.symbol.file"/>
+        </javac>
+    </target>
+
+    <target name="test" depends="build" description="Unit Test">
+        <sequential>
+            <javac srcdir="${dir.test.src}" destdir="${dir.test.build}" includeAntRuntime="false" debug="true">
+                <classpath refid="test.classpath"/>
+                <compilerarg value="-Xlint:unchecked"/>
+                <compilerarg value="-XDignore.symbol.file"/>
+            </javac>
+            <junit printsummary="withOutAndErr" errorProperty="test.failed" failureProperty="test.failed" fork="true">
+                <sysproperty key="results.dir" value="${dir.reports.unit}"/>
+                <classpath refid="test.classpath"/>
+                <formatter type="xml"/>
+                <formatter type="plain" usefile="false"/>
+                <batchtest todir="${dir.reports.unit}">
+                    <fileset dir="${dir.test.src}">
+                        <include name="**/*Test.java"/>
+                        <exclude name="**/JavaGeneratorTest.java"/>
+                    </fileset>
+                </batchtest>
+                <batchtest fork="true" todir="${dir.reports.unit}">
+                    <fileset dir="${dir.test.src}">
+                        <include name="**/JavaGeneratorTest.java"/>
+                    </fileset>
+                </batchtest>
+            </junit>
+            <junitreport todir="${dir.reports.unit}">
+                <fileset dir="${dir.reports.unit}">
+                    <include name="TEST-*.xml"/>
+                </fileset>
+                <report todir="${dir.reports.unit}"/>
+            </junitreport>
+            <fail message="Tests failed. Check log and/or reports." if="test.failed"/>
+        </sequential>
+    </target>
+
+    <target name="javadoc" depends="build">
+        <javadoc sourcepath="${dir.main.src}"
+                 destdir="${dir.docs.java}"
+                 overview="${dir.main.src}/overview.html"
+                 author="true"
+                 version="true"
+                 use="true"
+                 windowtitle="Simple Binary Encoding">
+            <arg value="-XDignore.symbol.file"/>
+            <doctitle><![CDATA[<h1>Simple Binary Encoding</h1>]]></doctitle>
+            <bottom><![CDATA[<i>Copyright &#169; 2013 Real Logic Ltd. All Rights Reserved.</i>]]></bottom>
+        </javadoc>
+    </target>
+
+    <target name="cpp:doc" depends="build" description="Generate doc for OTF C++ Decoder">
+        <doxygen>
+            <property name="INPUT" value="${dir.main.cpp.src}/otf_api"/>
+            <property name="OUTPUT_DIRECTORY" value="${dir.docs.cpp}"/>
+            <property name="RECURSIVE" value="YES"/>
+            <property name="GENERATE_LATEX" value="false"/>
+            <property name="PROJECT_NAME" value="Simple Binary Encoding"/>
+            <property name="PROJECT_NUMBER" value="${build.version}"/>
+            <property name="EXAMPLE_PATH" value="${dir.examples.cpp98.src}/SbeOtfDecoder.cpp"/>
+            <property name="WARNINGS" value="YES"/>
+            <property name="FILE_PATTERNS" value="*.h"/>
+            <property name="OPTIMIZE_OUTPUT_FOR_C" value="YES"/>
+            <property name="OPTIMIZE_OUTPUT_FOR_JAVA" value="NO"/>
+            <property name="FULL_PATH_NAMES" value="NO"/>
+            <property name="HTML_OUTPUT" value="${module.name}-otfcpp-doc-${build.version}"/>
+        </doxygen>
+    </target>
+
+    <target name="dist" depends="build, javadoc" description="Generate the distribution">
+        <jar destfile="${jar}">
+            <manifest>
+                <attribute name="Main-Class" value="uk.co.real_logic.sbe.SbeTool"/>
+            </manifest>
+            <fileset dir="${dir.main.build}"/>
+        </jar>
+        <jar destfile="${javadoc.jar}">
+            <fileset dir="${dir.docs.java}"/>
+        </jar>
+        <jar destfile="${sources.jar}">
+            <fileset dir="${dir.main.src}"/>
+        </jar>
+
+        <!-- Copying SbeTool to a constant name (without timestamp and version number, which makes life easier for other builds..) -->
+        <copy file="${jar}" tofile="${dir.dist}/sbe.jar"/>
+    </target>
+
+    <target name="cpp:dist" depends="cpp:compile, cpp:doc">
+        <zip destfile="${dir.dist}/${module.name}-otfcpp-doc-${build.version}.zip">
+            <fileset dir="${dir.docs.cpp}"/>
+        </zip>
+    </target>
+
+
+    <target name="all" depends="clean, checkstyle, build, test, javadoc, dist"/>
+
+    <!-- SBE Serialized IR targets -->
+
+    <path id="sbetool.classpath">
+        <fileset dir="${dir.dist}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="generate:java:sbeir-stubs" depends="dist" description="Generate serialized IR stubs for Java">
+        <java classname="uk.co.real_logic.sbe.SbeTool">
+            <classpath refid="sbetool.classpath"/>
+            <sysproperty key="sbe.output.dir" value="${dir.main.src}"/>
+            <sysproperty key="sbe.target.language" value="Java"/>
+            <arg value="${dir.main.resources}/sbe-ir.xml"/>
+        </java>
+    </target>
+
+    <target name="generate:cpp98:sbeir-stubs" depends="dist" description="Generate serialized IR stubs for C++98">
+        <java classname="uk.co.real_logic.sbe.SbeTool">
+            <classpath refid="sbetool.classpath"/>
+            <sysproperty key="sbe.output.dir" value="${dir.main.cpp.src}"/>
+            <sysproperty key="sbe.target.language" value="cpp98"/>
+            <arg value="${dir.main.resources}/sbe-ir.xml"/>
+        </java>
+    </target>
+
+    <target name="generate:chsarp:sbeir-stubs" depends="dist" description="Generate serialized IR stubs for C#">
+        <java classname="uk.co.real_logic.sbe.SbeTool">
+            <classpath refid="sbetool.classpath"/>
+            <sysproperty key="sbe.output.dir" value="${dir.main.csharp.src}"/>
+            <sysproperty key="sbe.target.language" value="csharp"/>
+            <sysproperty key="sbe.target.namespace" value="Adaptive.SimpleBinaryEncoding.Ir.Generated"/>
+            <arg value="${dir.main.resources}/sbe-ir.xml"/>
+        </java>
+    </target>
+
+    <target name="generate:sbeir-stubs" depends="generate:java:sbeir-stubs, generate:cpp98:sbeir-stubs, generate:chsarp:sbeir-stubs"
+            description="Generate serialized IR code for all languages"/>
+
+    <!-- SBE Examples targets -->
+
+    <property name="dir.examples.src" value="examples/java"/>
+    <property name="dir.examples.resources" value="examples/resources"/>
+    <property name="dir.gen.java" value="target/gen/java"/>
+    <property name="dir.examples.build" location="target/examples/java/classes"/>
+
+    <property name="dir.gen.cpp98" value="target/gen/cpp98"/>
+    <property name="exec.example.cpp98" location="target/gen/cpp98/SbeExample"/>
+    <property name="exec.example.otf.cpp98" location="target/gen/cpp98/SbeOtfDecoder"/>
+    <property name="dir.examples.cpp98.src" location="examples/cpp98"/>
+    <property name="dir.examples.cpp98.include" location="main/cpp"/>
+
+    <path id="examples.classpath">
+        <pathelement path="${dir.examples.build}"/>
+        <fileset dir="${dir.dist}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="examples:java" depends="dist">
+        <mkdir dir="${dir.gen.java}"/>
+        <mkdir dir="${dir.examples.build}"/>
+        <java classname="uk.co.real_logic.sbe.SbeTool">
+            <classpath refid="examples.classpath"/>
+            <sysproperty key="sbe.output.dir" value="${dir.gen.java}"/>
+            <sysproperty key="sbe.target.language" value="Java"/>
+            <arg value="${dir.examples.resources}/example-schema.xml"/>
+            <arg value="${dir.examples.resources}/example-extension-schema.xml"/>
+        </java>
+        <javac srcdir="${dir.gen.java}" destdir="${dir.examples.build}" includeAntRuntime="false" debug="true">
+            <classpath refid="examples.classpath"/>
+        </javac>
+        <javac srcdir="${dir.examples.src}" destdir="${dir.examples.build}" includeAntRuntime="false" debug="true">
+            <classpath refid="examples.classpath"/>
+        </javac>
+        <java classname="uk.co.real_logic.sbe.examples.ExampleUsingGeneratedStub">
+            <classpath refid="examples.classpath"/>
+        </java>
+        <java classname="uk.co.real_logic.sbe.examples.ExampleUsingGeneratedStubExtension">
+            <classpath refid="examples.classpath"/>
+        </java>
+        <java classname="uk.co.real_logic.sbe.examples.OtfExample">
+            <classpath refid="examples.classpath"/>
+        </java>
+    </target>
+
+    <target name="cpp:examples:gen" depends="dist" description="Generate and run C++ generated code example">
+        <mkdir dir="${dir.gen.cpp98}"/>
+        <java classname="uk.co.real_logic.sbe.SbeTool">
+            <classpath refid="examples.classpath"/>
+            <sysproperty key="sbe.output.dir" value="${dir.gen.cpp98}"/>
+            <sysproperty key="sbe.target.language" value="cpp98"/>
+            <arg value="${dir.examples.resources}/example-schema.xml"/>
+        </java>
+        <cc outtype="executable"
+            debug="true"
+            subsystem="console"
+            outfile="${exec.example.cpp98}">
+            <includepath path="${dir.examples.cpp98.src}"/>
+            <includepath path="${dir.gen.cpp98}"/>
+            <includepath path="${dir.examples.cpp98.include}"/>
+            <compilerarg value="-std=c++98" unless="windows"/>
+            <compilerarg value="/wd4514" if="windows"/>
+            <compiler name="msvc" if="windows"/>
+            <linker name="msvc" if="windows"/>
+            <defineset if="windows">
+                <define name="WIN32" value="1"/>
+            </defineset>
+            <defineset if="cpp.have.cmath">
+                <define name="SBE_HAVE_CMATH" value="1"/>
+            </defineset>
+            <syslibset libs="stdc++"/>
+            <fileset dir="${dir.examples.cpp98.src}" includes="SbeExample.cpp"/>
+        </cc>
+        <exec executable="${exec.example.cpp98}" failonerror="true"/>
+    </target>
+
+    <target name="cpp:examples:otf" depends="dist, examples:java, cpp:compile" description="Generate and run OTF C++ example">
+        <sequential>
+            <mkdir dir="${dir.gen.cpp98}"/>
+            <cc outtype="executable"
+                debug="true"
+                subsystem="console"
+                outfile="${exec.example.otf.cpp98}">
+                <includepath path="${dir.examples.cpp98.src}"/>
+                <includepath path="${dir.gen.cpp98}"/>
+                <includepath path="${dir.examples.cpp98.include}"/>
+                <compilerarg value="-std=c++98" unless="windows"/>
+                <compilerarg value="-Wall" unless="windows"/>
+                <compilerarg value="/wd4514" if="windows"/>
+                <compiler name="msvc" if="windows"/>
+                <linker name="msvc" if="windows"/>
+                <defineset if="windows">
+                    <define name="WIN32" value="1"/>
+                </defineset>
+                <defineset if="cpp.have.cmath">
+                    <define name="SBE_HAVE_CMATH" value="1"/>
+                </defineset>
+               <syslibset libs="stdc++"/>
+                <fileset dir="${dir.main.cpp.build}" includes="*.o*"/>
+                <fileset dir="${dir.examples.cpp98.src}" includes="SbeOtfDecoder.cpp"/>
+            </cc>
+            <java classname="uk.co.real_logic.sbe.SbeTool">
+                <classpath refid="examples.classpath"/>
+                <sysproperty key="sbe.output.dir" value="${dir.gen.cpp98}"/>
+                <sysproperty key="sbe.generate.stubs" value="false"/>
+                <sysproperty key="sbe.generate.ir" value="true"/>
+                <arg value="${dir.examples.resources}/example-schema.xml"/>
+            </java>
+            <java classname="uk.co.real_logic.sbe.examples.ExampleUsingGeneratedStub">
+                <classpath refid="examples.classpath"/>
+                <sysproperty key="sbe.encoding.filename" value="${dir.gen.cpp98}/Car.data"/>
+            </java>
+            <exec executable="${exec.example.otf.cpp98}" failonerror="true">
+                <arg value="${dir.gen.cpp98}/example-schema.sbeir"/>
+                <arg value="${dir.gen.cpp98}/Car.data"/>
+            </exec>
+        </sequential>
+    </target>
+
+    <target name="examples:cpp" depends="cpp:examples:gen, cpp:examples:otf" description="Compile and run C++98 examples"/>
+
+    <target name="update:gtest" depends="">
+        <sequential>
+            <local name="gtest.name"/>
+            <local name="sha.fail"/>
+            <local name="cksum.fail"/>
+            <property name="gtest.name" value="gtest-1.7.0.zip"/>
+            <get dest="/tmp">
+                <url url="https://googletest.googlecode.com/files/${gtest.name}"/>
+            </get>
+            <checksum file="/tmp/${gtest.name}" algorithm="sha1" property="f85f6d2481e2c6c4a18539e391aa4ea8ab0394af" verifyproperty="sha.fail"/>
+            <condition property="cksum.fail">
+                <equals arg1="${sha.fail}" arg2="false"/>
+            </condition>
+            <fail if="cksum.fail">Checksum failed</fail>
+            <copy file="/tmp/${gtest.name}" todir="test/lib"/>
+        </sequential>
+    </target>
+
+    <target name="gtest:unzip" depends="init">
+        <unzip src="test/lib/gtest-1.7.0.zip" dest="target/test/cpp"/>
+    </target>
+
+    <target name="gtest:compile" depends="gtest:unzip">
+        <cc outtype="static"
+            subsystem="console"
+            debug="true"
+            multithreaded="true"
+            exceptions="true"
+            objdir="${dir.gtest.build}">
+            <compilerarg value="-Wall" unless="windows"/>
+            <compilerarg value="-pthread" unless="windows"/>
+            <includepath path="${dir.gtest.include}"/>
+            <includepath path="${dir.gtest.src}"/>
+            <compilerarg value="/wd4514" if="windows"/>
+            <compiler name="msvc" if="windows"/>
+            <defineset if="windows">
+                <define name="WIN32" value="1"/>
+            </defineset>
+            <defineset if="cpp.have.cmath">
+                <define name="SBE_HAVE_CMATH" value="1"/>
+            </defineset>
+            <fileset dir="${dir.gtest.src}">
+                <include name="src/gtest-all.cc"/>
+                <include name="src/gtest_main.cc"/>
+            </fileset>
+        </cc>
+    </target>
+
+    <target name="cpp:compile" depends="init">
+        <cc outtype="static"
+            debug="true"
+            subsystem="console"
+            objdir="${dir.main.cpp.build}">
+            <includepath path="${dir.main.cpp.src}"/>
+            <compilerarg value="-std=c++98" unless="windows"/>
+            <compilerarg value="-Wall" unless="windows"/>
+            <compilerarg value="/wd4514" if="windows"/>
+            <compiler name="msvc" if="windows"/>
+            <defineset if="windows">
+                <define name="WIN32" value="1"/>
+            </defineset>
+            <defineset if="cpp.have.cmath">
+                <define name="SBE_HAVE_CMATH" value="1"/>
+            </defineset>
+            <fileset dir="${dir.main.cpp.src}" includes="**/*.cpp"/>
+        </cc>
+    </target>
+
+    <target name="cpp:test:codegen" depends="dist">
+        <sequential>
+            <mkdir dir="${dir.gen.cpp98}"/>
+            <java classname="uk.co.real_logic.sbe.SbeTool">
+                <classpath refid="examples.classpath"/>
+                <sysproperty key="sbe.output.dir" value="${dir.gen.cpp98}"/>
+                <sysproperty key="sbe.target.language" value="cpp98"/>
+                <sysproperty key="sbe.generate.ir" value="true"/>
+                <arg value="${dir.test.resources}/code-generation-schema-cpp.xml"/>
+            </java>
+            <copy file="${dir.gen.cpp98}/code-generation-schema-cpp.sbeir" todir="${dir.exec.test.cpp}"/>
+        </sequential>
+    </target>
+
+    <target name="cpp:test" depends="init, cpp:compile, gtest:compile, cpp:test:codegen">
+        <!-- all tests are placed in the main runner -->
+        <cc outtype="executable"
+            subsystem="console"
+            debug="true"
+            multithreaded="true"
+            outfile="${exec.test.cpp}">
+            <compilerarg value="-Wall" unless="windows"/>
+            <compilerarg value="-pthread" unless="windows"/>
+            <includepath path="${dir.gtest.include}"/>
+            <includepath path="${dir.main.cpp.src}"/>
+            <includepath path="${dir.test.cpp.include}"/>
+            <includepath path="${dir.gen.cpp98}"/>
+            <compilerarg value="/wd4514" if="windows"/>
+            <compiler name="msvc" if="windows"/>
+            <linker name="msvc" if="windows"/>
+            <defineset if="windows">
+                <define name="WIN32" value="1"/>
+            </defineset>
+            <defineset if="cpp.have.cmath">
+                <define name="SBE_HAVE_CMATH" value="1"/>
+            </defineset>
+            <fileset dir="${dir.main.cpp.build}" includes="*.o*"/>
+            <fileset dir="${dir.gtest.build}" includes="*.o*"/>
+            <fileset dir="${dir.test.cpp.src}" includes="**/*Test.cpp"/>
+            <syslibset libs="pthread, stdc++"/>
+        </cc>
+        <exec executable="${exec.test.cpp}" failonerror="true">
+            <arg value="--gtest_color=no"/>
+        </exec>
+    </target>
+
+    <target name="cpp" depends="cpp:test, cpp:doc, cpp:dist"/>
+</project>
