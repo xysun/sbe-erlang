@@ -28,6 +28,7 @@ public class ExampleUsingGeneratedStubSimple
     private static final String ENCODING_FILENAME = "sbe.encoding.filename";
     private static final byte[] MAKE;
     private static final byte[] MODEL;
+    private static final byte[] VEHICLE_CODE;
 
     private static final MessageHeader MESSAGE_HEADER = new MessageHeader();
     private static final Car CAR = new Car();
@@ -36,6 +37,7 @@ public class ExampleUsingGeneratedStubSimple
     {
         try
         {
+            VEHICLE_CODE = "abcdef".getBytes(Car.vehicleCodeCharacterEncoding());
             MAKE = "Honda".getBytes(Car.makeCharacterEncoding());
             MODEL = "Civic VTi".getBytes(Car.modelCharacterEncoding());
         }
@@ -86,7 +88,7 @@ public class ExampleUsingGeneratedStubSimple
 
         // Lookup the applicable flyweight to decode this type of message based on templateId and version.
         final int templateId = MESSAGE_HEADER.templateId();
-        if (templateId != baseline.Car.TEMPLATE_ID)
+        if (templateId != baselinesimple.Car.TEMPLATE_ID)
         {
             throw new IllegalStateException("Template ids do not match");
         }
@@ -104,15 +106,23 @@ public class ExampleUsingGeneratedStubSimple
         final int srcOffset = 0;
 
         car.wrapForEncode(directBuffer, bufferOffset)
-           .serialNumber(1234)
-           .modelYear(2013);
+           .modelYear(2023)
+           .serialNumber(1234);
+           //.modelYear(2013);
+           //.putVehicleCode(VEHICLE_CODE, srcOffset);
 
+
+        car.putMake(MAKE, srcOffset, MAKE.length);
+       
+        
         for (int i = 0, size = Car.someNumbersLength(); i < size; i++)
         {
             car.someNumbers(i, i);
         }
 
-        car.putMake(MAKE, srcOffset, MAKE.length);
+        car.putVehicleCode(VEHICLE_CODE, srcOffset);
+
+        //car.putMake(MAKE, srcOffset, MAKE.length);
         car.putModel(MODEL, srcOffset, MODEL.length);
 
         return car.size();
@@ -143,6 +153,11 @@ public class ExampleUsingGeneratedStubSimple
             sb.append(car.someNumbers(i)).append(", ");
         }
 
+        sb.append("\ncar.vehicleCode=");
+        for (int i = 0, size = Car.vehicleCodeLength(); i < size; i++)
+        {
+            sb.append((char)car.vehicleCode(i));
+        }
 
         sb.append("\ncar.make.semanticType=").append(Car.makeMetaAttribute(MetaAttribute.SEMANTIC_TYPE));
         sb.append("\ncar.make=").append(new String(buffer, 0, car.getMake(buffer, 0, buffer.length), Car.makeCharacterEncoding()));
