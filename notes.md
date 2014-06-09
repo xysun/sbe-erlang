@@ -1,26 +1,11 @@
 #### Centos
-* Use the minimal iso image
 * `yum update`, `adduser joy`, `passwd joy`, `visudo`
 * To `ssh` into guest VM from host: use NAT + port forwarding
-* Install java: 
-    
-    `yum search java | grep 'java-'`
-    
-    `yum install java-1.7.0-openjdk-devel`
-
-* Start `ssh` server: 
-
-	`sudo /sbin/service sshd start`
-	
-* shutdown:
-
-    `sudo shutdown -h now`
-
+* [Install java](http://www.if-not-true-then-false.com/2010/install-sun-oracle-java-jdk-jre-7-on-fedora-centos-red-hat-rhel/)
 	
 #### Erlang
 
 * [efficiency guide](http://erlang.org/doc/efficiency_guide/)
-
 
 #### SBE
 * build & run example
@@ -30,32 +15,18 @@
     `yum install ant ant-junit ant-trax`
     
     `ant`
+    
+    change the `jaxp_parser_impl` alternative from `xerces-j2` to `/usr/share/java/libgcj-4.4.7.jar`: `sudo alternatives --config jaxp_parser_impl`
 
-    `java -jar sbe.jar example-schema.xml`
-    
-    `java -jar sbe.jar example-extension-schema.xml`
-    
-    copy `baseline/` and `extensions/` folder to the java example folder
-    
     `ant examples:java`
 
 * run benchmark:
 
     `sudo yum install gcc gcc-cpp gcc-c++`
     
-    `ant -f perf-build.xml protobuf:build`
+    `ant -f perf-build.xml protobuf:build` (if `ant` emits error, may need to download using `curl` manually and put into `deps/pb`, then run `protobuf:build` without dependency on `protobuf:download`.)
     
     add `<property name="protobuf.home location="deps/protobuf-2.5.0/"/>` to `perf-build.xml`
-    
-    copy the previously generated `baseline` to `perf/java/uk/co/real_logic/sbe/examples`
-    
-    `ant -f perf-build.xml clean`
-    
-    `ant -f perf-build.xml init`
-    
-    `java -Dsbe.output.dir=target/perf/java -jar target/dist/sbe.jar perf/resources/sbe/fix-message-samples.xml`
-    
-    `java -Dsbe.output.dir=target/perf/java -jar target/dist/sbe.jar perf/resources/sbe/car.xml`
     
     [change centos setup](http://serverfault.com/questions/389696/centos-etc-hosts-doesnt-resolve-my-hostname)
     
@@ -63,7 +34,7 @@
     
     	edit `/etc/hosts`, make sure having a line `127.0.0.1 centos.dd centos`
     
-    `ant -f perf-build.xml java:perf:test`
+    `ant -f perf-build.xml`
    
 #### Notes
 
@@ -76,24 +47,16 @@
 
 #### performance
 
-* 1G RAM, 20G Disk, centos VM in dropbox
+* 1G RAM, 30G SSD on [DigitalOcean](https://www.digitalocean.com/?refcode=52476c7ad3e1)
 
 * using original example
 
 [exec] Benchmark                                         Mode Thr    Cnt  Sec         Mean   Mean error    Units
-
-[exec] u.c.r.protobuf.CarBenchmark.testDecode           thrpt   1     30    1      263.377       37.179   ops/ms
-
-[exec] u.c.r.protobuf.CarBenchmark.testEncode           thrpt   1     30    1      175.462       15.670   ops/ms
-
-[exec] u.c.r.protobuf.MarketDataBenchmark.testDecode    thrpt   1     30    1      787.063       96.413   ops/ms
-
-[exec] u.c.r.protobuf.MarketDataBenchmark.testEncode    thrpt   1     30    1      692.691       79.078   ops/ms
-
-[exec] u.c.r.sbe.CarBenchmark.testDecode                thrpt   1     30    1     2779.810       16.916   ops/ms
-
-[exec] u.c.r.sbe.CarBenchmark.testEncode                thrpt   1     30    1     2779.987      106.962   ops/ms
-
-[exec] u.c.r.sbe.MarketDataBenchmark.testDecode         thrpt   1     30    1    11274.246      126.895   ops/ms
-
-[exec] u.c.r.sbe.MarketDataBenchmark.testEncode         thrpt   1     30    1    12806.140      181.391   ops/ms
+[exec] u.c.r.protobuf.CarBenchmark.testDecode           thrpt   1     30    1      354.925       13.302   ops/ms
+[exec] u.c.r.protobuf.CarBenchmark.testEncode           thrpt   1     30    1      277.557        6.342   ops/ms
+[exec] u.c.r.protobuf.MarketDataBenchmark.testDecode    thrpt   1     30    1     1180.244       21.789   ops/ms
+[exec] u.c.r.protobuf.MarketDataBenchmark.testEncode    thrpt   1     30    1     1056.558       22.026   ops/ms
+[exec] u.c.r.sbe.CarBenchmark.testDecode                thrpt   1     30    1     4513.438       81.523   ops/ms
+[exec] u.c.r.sbe.CarBenchmark.testEncode                thrpt   1     30    1     4249.915      179.351   ops/ms
+[exec] u.c.r.sbe.MarketDataBenchmark.testDecode         thrpt   1     30    1    17647.609      591.072   ops/ms
+[exec] u.c.r.sbe.MarketDataBenchmark.testEncode         thrpt   1     30    1    20334.654      275.050   ops/ms
