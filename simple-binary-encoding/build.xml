@@ -314,7 +314,8 @@
         </fileset>
     </path>
 
-    <target name="examples:java" depends="dist">
+    <!--<target name="examples:java" depends="dist">-->
+    <target name="examples:java" depends="">
         <mkdir dir="${dir.gen.java}"/>
         <mkdir dir="${dir.examples.build}"/>
         <java classname="uk.co.real_logic.sbe.SbeTool">
@@ -323,6 +324,7 @@
             <sysproperty key="sbe.target.language" value="Java"/>
             <arg value="${dir.examples.resources}/example-schema.xml"/>
             <arg value="${dir.examples.resources}/example-extension-schema.xml"/>
+            <arg value="${dir.examples.resources}/example-schema-simple.xml"/>
         </java>
         <javac srcdir="${dir.gen.java}" destdir="${dir.examples.build}" includeAntRuntime="false" debug="true">
             <classpath refid="examples.classpath"/>
@@ -330,13 +332,19 @@
         <javac srcdir="${dir.examples.src}" destdir="${dir.examples.build}" includeAntRuntime="false" debug="true">
             <classpath refid="examples.classpath"/>
         </javac>
-        <java classname="uk.co.real_logic.sbe.examples.ExampleUsingGeneratedStub">
+        <!--<java classname="uk.co.real_logic.sbe.examples.ExampleUsingGeneratedStub">
             <classpath refid="examples.classpath"/>
         </java>
         <java classname="uk.co.real_logic.sbe.examples.ExampleUsingGeneratedStubExtension">
             <classpath refid="examples.classpath"/>
         </java>
         <java classname="uk.co.real_logic.sbe.examples.OtfExample">
+            <classpath refid="examples.classpath"/>
+        </java>-->
+    </target>
+
+    <target name="examples:execjava" depends="">
+        <java classname="uk.co.real_logic.sbe.examples.ExampleUsingGeneratedStubSimple">
             <classpath refid="examples.classpath"/>
         </java>
     </target>
