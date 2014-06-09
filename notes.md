@@ -52,11 +52,19 @@
 * using original example
 
 [exec] Benchmark                                         Mode Thr    Cnt  Sec         Mean   Mean error    Units
+
 [exec] u.c.r.protobuf.CarBenchmark.testDecode           thrpt   1     30    1      354.925       13.302   ops/ms
+
 [exec] u.c.r.protobuf.CarBenchmark.testEncode           thrpt   1     30    1      277.557        6.342   ops/ms
+
 [exec] u.c.r.protobuf.MarketDataBenchmark.testDecode    thrpt   1     30    1     1180.244       21.789   ops/ms
+
 [exec] u.c.r.protobuf.MarketDataBenchmark.testEncode    thrpt   1     30    1     1056.558       22.026   ops/ms
+
 [exec] u.c.r.sbe.CarBenchmark.testDecode                thrpt   1     30    1     4513.438       81.523   ops/ms
+
 [exec] u.c.r.sbe.CarBenchmark.testEncode                thrpt   1     30    1     4249.915      179.351   ops/ms
+
 [exec] u.c.r.sbe.MarketDataBenchmark.testDecode         thrpt   1     30    1    17647.609      591.072   ops/ms
+
 [exec] u.c.r.sbe.MarketDataBenchmark.testEncode         thrpt   1     30    1    20334.654      275.050   ops/ms
