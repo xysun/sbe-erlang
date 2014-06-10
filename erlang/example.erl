@@ -3,7 +3,7 @@
 -compile(export_all).
 
 main() ->
-    Buffer = buffer:allocate(60),
+    Buffer = buffer:allocate(64),
     BufferOffset = 0,
     MessageTemplateVersion = 0,
     % encode a message
@@ -29,21 +29,24 @@ main() ->
 encode(Buffer, Offset) -> 
     SrcOffset = 0, 
     VehicleCode = list_to_binary("abcdef"),
-    {NewBuffer, NewOffset} = 
+    Make = list_to_binary("Honda"),
+    Model = list_to_binary("Civic VTi"),
+    Message = 
         util:chain_last(
             car:wrapForEncode(Buffer, Offset), 
             [
                 car:serialNumber(1234), % uint64
                 car:modelYear(2013), % uint16
-                car:putVehicleCode(VehicleCode, SrcOffset)
+                car:putVehicleCode(VehicleCode, SrcOffset),
+                car:putMake(Make, SrcOffset,size(Make)),
+                car:putModel(Model, SrcOffset, size(Model))
             ]
         ),
     
-    {NewBuffer2, NewOffset2} = 
+    Message2 = 
         util:chain_last(
-            {NewBuffer, NewOffset}, 
+            Message,
             [car:someNumbers(X, X) || X <- util:int_to_list(car:someNumbersLength())]
         ),
     
-    Message = {NewBuffer2, NewOffset2},
-    Message.
+    Message2.

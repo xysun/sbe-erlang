@@ -8,6 +8,11 @@
 % allocate x bytes
 allocate(Capacity) -> << <<0>> || _ <- util:int_to_list(Capacity) >>.
 
+checkLimit(Buffer, Limit) -> 
+    if Limit > size(Buffer) -> error(limit_beyond_capacity);
+       true -> ok
+    end.
+
 % Size is in bits
 % unsigned Put
 uPut(Size, Buffer, Offset, Value) ->
@@ -25,8 +30,8 @@ iPut(Size, Buffer, Offset, Value) ->
             << Header:OffsetInBits, Value:Size/integer-signed-little, Rest/binary >>
     end.
 
+uint8Put(Buffer, Offset, Value) -> uPut(8, Buffer, Offset, Value).
 uint16Put(Buffer, Offset, Value) -> uPut(16, Buffer, Offset, Value).
-
 uint64Put(Buffer, Offset, Value) -> uPut(64, Buffer, Offset, Value).
 
 int32Put(Buffer, Offset, Value) -> iPut(32, Buffer, Offset, Value).
@@ -41,4 +46,3 @@ charsPut(Buffer, Offset, Value, SrcOffset, Length) ->
          << Header:OffsetInBits, _:LengthInBits, Rest/binary >>} ->
             << Header:OffsetInBits, CopyValue:LengthInBits, Rest/binary>>
     end.
-    
