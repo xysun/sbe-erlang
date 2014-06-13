@@ -19,6 +19,8 @@ import baselinesimple.*;
 import uk.co.real_logic.sbe.codec.java.DirectBuffer;
 
 import java.io.FileOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -72,7 +74,7 @@ public class ExampleUsingGeneratedStubSimple
         // Optionally write the encoded buffer to a file for decoding by the On-The-Fly decoder
 
         //final String encodingFilename = System.getProperty(ENCODING_FILENAME);
-        final String encodingFilename = "car.log";
+        final String encodingFilename = "car_java";
         if (encodingFilename != null)
         {
             try (final FileChannel channel = new FileOutputStream(encodingFilename).getChannel())
@@ -83,9 +85,17 @@ public class ExampleUsingGeneratedStubSimple
         }
 
         // Decode the encoded message
+        // NOTE: read from erlang file, replace ByteBuffer, directBuffer
+        File aFile = new File("car_erlang");
+        FileInputStream inFile = new FileInputStream(aFile);
+        FileChannel inChannel = inFile.getChannel();
+        final ByteBuffer newBuffer = ByteBuffer.allocateDirect(4096);
+        inChannel.read(newBuffer);
+
+        final DirectBuffer decodeBuffer = new DirectBuffer(newBuffer);
 
         bufferOffset = 0;
-        MESSAGE_HEADER.wrap(directBuffer, bufferOffset, messageTemplateVersion);
+        MESSAGE_HEADER.wrap(decodeBuffer, bufferOffset, messageTemplateVersion);
 
         // Lookup the applicable flyweight to decode this type of message based on templateId and version.
         final int templateId = MESSAGE_HEADER.templateId();
@@ -99,7 +109,7 @@ public class ExampleUsingGeneratedStubSimple
         final int actingVersion = MESSAGE_HEADER.version();
 
         bufferOffset += MESSAGE_HEADER.size();
-        decode(CAR, directBuffer, bufferOffset, actingBlockLength, schemaId, actingVersion);
+        decode(CAR, decodeBuffer, bufferOffset, actingBlockLength, schemaId, actingVersion);
     }
 
     public static int encode(final Car car, final DirectBuffer directBuffer, final int bufferOffset)
