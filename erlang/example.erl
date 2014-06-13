@@ -37,7 +37,27 @@ main() ->
            ActingBlockLength,
            SchemaId,
            ActingVersion),
+    
+    MessageBuffer.
+
+
+readJava() -> 
+    {ok, Binary} = file:read_file("car_java"),
+    MessageHeaderForDecode = messageHeader:wrap(Binary, 0, 0),
+    TemplateId = messageHeader:getTemplateId(MessageHeaderForDecode),
+    
+    ActingBlockLength = messageHeader:getBlockLength(MessageHeaderForDecode),
+    SchemaId = messageHeader:getSchemaId(MessageHeaderForDecode),
+    ActingVersion = messageHeader:getVersion(MessageHeaderForDecode),
+
+    decode(Binary, 
+           0 + messageHeader:size(),
+           ActingBlockLength,
+           SchemaId,
+           ActingVersion),
+
     ok.
+
 
 encode(Buffer, Offset) -> 
     SrcOffset = 0, 

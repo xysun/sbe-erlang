@@ -71,7 +71,8 @@ public class ExampleUsingGeneratedStubSimple
 
         // Optionally write the encoded buffer to a file for decoding by the On-The-Fly decoder
 
-        final String encodingFilename = System.getProperty(ENCODING_FILENAME);
+        //final String encodingFilename = System.getProperty(ENCODING_FILENAME);
+        final String encodingFilename = "car.log";
         if (encodingFilename != null)
         {
             try (final FileChannel channel = new FileOutputStream(encodingFilename).getChannel())
