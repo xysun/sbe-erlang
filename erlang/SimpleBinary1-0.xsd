@@ -1,0 +1,475 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema targetNamespace="http://www.fixprotocol.org/ns/simple/1.0"
+           elementFormDefault="unqualified" xmlns:sbe="http://www.fixprotocol.org/ns/simple/1.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xsd:annotation>
+        <xsd:documentation>
+            Message schema for FIX Simple Binary Encoding
+            Version: Release Candidate 2
+        </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:element name="messageSchema">
+        <xsd:annotation>
+            <xsd:documentation>
+                Root of XML document, holds all message templates
+                and their elements
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="types" maxOccurs="unbounded">
+                    <xsd:annotation>
+                        <xsd:documentation>
+                            More than one set of types may be provided,
+                            e.g. built-in and custom.
+                            Names must be unique across all encoding
+                            types.
+                        </xsd:documentation>
+                    </xsd:annotation>
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="type" type="sbe:encodedDataType"
+                                        maxOccurs="unbounded" />
+                            <xsd:element name="composite" type="sbe:compositeDataType"
+                                        maxOccurs="unbounded" />
+                            <xsd:element name="enum" type="sbe:enumType"
+                                        minOccurs="0" maxOccurs="unbounded" />
+                            <xsd:element name="set" type="sbe:setType" minOccurs="0"
+                                        maxOccurs="unbounded" />
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:element ref="sbe:message" maxOccurs="unbounded" />
+            </xsd:sequence>
+            <xsd:attribute name="package" type="xsd:string" />
+            <!-- New schemas should assign a unique ID. Defaults to zero to maintain compatibility with RC1 -->
+            <xsd:attribute name="id" type="xsd:unsignedShort" default="0" />
+            <xsd:attribute name="version" type="xsd:nonNegativeInteger" use="required" />
+            <!-- May map to FIX version, such as 'FIX.5.0_SP' -->
+            <xsd:attribute name="semanticVersion" type="xsd:string"
+                          use="optional" />
+            <xsd:attribute name="description" type="xsd:string"
+                          use="optional" />
+            <xsd:attribute name="byteOrder" default="littleEndian">
+                <xsd:simpleType>
+                    <xsd:restriction base="xsd:token">
+                        <xsd:enumeration value="bigEndian" />
+                        <xsd:enumeration value="littleEndian" />
+                    </xsd:restriction>
+                </xsd:simpleType>
+            </xsd:attribute>
+            <xsd:attribute name="headerType" type="sbe:symbolicName_t"
+                          default="messageHeader">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        Name of the encoding type of the message header,
+                        which is the same for all messages in a schema. The name has a
+                        default, but an encoding of that name must be present under a
+                        'types' element.
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:attribute>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:element name="message">
+        <xsd:annotation>
+            <xsd:documentation>
+                A message type, also known as a message template
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType mixed="true">
+            <xsd:sequence>
+                <xsd:element name="field" type="sbe:fieldType"
+                            minOccurs="0" maxOccurs="unbounded" />
+                <xsd:element name="group" type="sbe:groupType"
+                            minOccurs="0" maxOccurs="unbounded" />
+                <xsd:element name="data" type="sbe:fieldType" minOccurs="0"
+                            maxOccurs="unbounded" />
+            </xsd:sequence>
+            <xsd:attribute name="name" type="sbe:symbolicName_t" use="required" />
+            <!-- Unique ID of this message template -->
+            <xsd:attribute name="id" type="xsd:unsignedShort" use="required" />
+            <xsd:attribute name="description" type="xsd:string"
+                          use="optional" />
+            <!-- Space reserved for root level of message, not include groups or variable-length
+                data elements. -->
+            <xsd:attribute name="blockLength" type="xsd:nonNegativeInteger"
+                          use="optional" />
+            <!-- May map to MsgType value, such as 'D' for NewOrderSingle message -->
+            <xsd:attribute name="semanticType" type="xsd:token"
+                          use="optional" />
+            <xsd:attribute name="sinceVersion" type="xsd:nonNegativeInteger"
+                          default="0">
+                <xsd:annotation>
+                    <xsd:documentation>
+                        The version of the schema in which the message
+                        was added
+                    </xsd:documentation>
+                </xsd:annotation>
+            </xsd:attribute>
+        </xsd:complexType>
+    </xsd:element>
+
+    <xsd:complexType name="groupType">
+        <xsd:annotation>
+            <xsd:documentation>
+                A repeating group contains an array of entries
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="field" type="sbe:fieldType" minOccurs="0"
+                        maxOccurs="unbounded" />
+            <xsd:element name="group" type="sbe:groupType" minOccurs="0"
+                        maxOccurs="unbounded" />
+        </xsd:sequence>
+        <xsd:attribute name="name" type="sbe:symbolicName_t" use="optional" />
+        <!-- Maps to FIX Repository repeating group ComponentID -->
+        <xsd:attribute name="id" type="xsd:unsignedShort" use="required" />
+        <xsd:attribute name="description" type="xsd:string" use="optional" />
+        <!-- Space reserved for an entry -->
+        <xsd:attribute name="blockLength" type="xsd:nonNegativeInteger"
+                      use="optional" />
+        <xsd:attribute name="sinceVersion" type="xsd:nonNegativeInteger"
+                      default="0" />
+        <xsd:attribute name="dimensionType" type="sbe:symbolicName_t"
+                      default="groupSizeEncoding" />
+    </xsd:complexType>
+
+    <xsd:complexType name="encodedDataType" mixed="true">
+        <xsd:annotation>
+            <xsd:documentation>
+                Simple data type of a field
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:token">
+                <xsd:attribute name="name" type="sbe:symbolicName_t" use="required" />
+                <xsd:attribute name="description" type="xsd:string"
+                              use="optional" />
+                <xsd:attribute name="presence" default="required">
+                    <xsd:simpleType>
+                        <xsd:restriction base="xsd:token">
+                            <!-- The value must always be populated -->
+                            <xsd:enumeration value="required" />
+                            <!-- Value set to nullValue to indicate value not set -->
+                            <xsd:enumeration value="optional" />
+                            <!-- Value does not vary -->
+                            <xsd:enumeration value="constant" />
+                        </xsd:restriction>
+                    </xsd:simpleType>
+                </xsd:attribute>
+                <!-- Special values in string format -->
+                <!-- Override of default null indicator -->
+                <xsd:attribute name="nullValue" type="xsd:string" use="optional" />
+                <!-- Valid numerical range -->
+                <xsd:attribute name="minValue" type="xsd:string" use="optional" />
+                <xsd:attribute name="maxValue" type="xsd:string" use="optional" />
+                <!-- Number of elements of the primitiveType. Special value zero indicates
+                    variable length. -->
+                <xsd:attribute name="length" type="xsd:nonNegativeInteger"
+                              default="1" />
+                <!-- Offset from start of a composite type -->
+                <xsd:attribute name="offset" type="xsd:unsignedInt" use="optional" />
+                <xsd:attribute name="primitiveType" use="required">
+                    <xsd:simpleType>
+                        <xsd:restriction base="xsd:token">
+                            <xsd:enumeration value="char" />
+                            <xsd:enumeration value="int8" />
+                            <xsd:enumeration value="int16" />
+                            <xsd:enumeration value="int32" />
+                            <xsd:enumeration value="int64" />
+                            <xsd:enumeration value="uint8" />
+                            <xsd:enumeration value="uint16" />
+                            <xsd:enumeration value="uint32" />
+                            <xsd:enumeration value="uint64" />
+                            <xsd:enumeration value="float" />
+                            <xsd:enumeration value="double" />
+                        </xsd:restriction>
+                    </xsd:simpleType>
+                </xsd:attribute>
+                <!-- If a field contains character data, the default encoding is UTF-8 -->
+                <xsd:attribute name="characterEncoding" type="xsd:string" use="optional" />
+                <xsd:attributeGroup ref="sbe:fieldAttributes" />
+                <xsd:attributeGroup ref="sbe:encodingAttributes" />
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="compositeDataType" mixed="true">
+        <xsd:annotation>
+            <xsd:documentation>
+                A derived data type; composed of two or more types
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="type" type="sbe:encodedDataType"
+                        minOccurs="0" maxOccurs="unbounded" />
+            <xsd:element name="composite" type="sbe:compositeDataType"
+                        minOccurs="0" maxOccurs="unbounded" />
+        </xsd:sequence>
+        <xsd:attribute name="name" type="sbe:symbolicName_t" use="required" />
+        <xsd:attribute name="description" type="xsd:string" use="optional" />
+        <xsd:attributeGroup ref="sbe:fieldAttributes" />
+    </xsd:complexType>
+
+    <xsd:complexType name="messageHeaderType" mixed="true">
+        <xsd:annotation>
+            <xsd:documentation>
+                Standard message header layout
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="sbe:compositeDataType">
+                <xsd:sequence>
+                    <xsd:element name="blockLength" type="sbe:encodedDataType">
+                        <xsd:annotation>
+                            <xsd:documentation>Length of the root level of a message
+                            </xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="templateId" type="sbe:encodedDataType">
+                        <xsd:annotation>
+                            <xsd:documentation>Identifier of a message template
+                            </xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="version" type="sbe:encodedDataType">
+                        <xsd:annotation>
+                            <xsd:documentation>Message schema version</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="reserved" type="sbe:encodedDataType" />
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="varDataType" mixed="true">
+        <xsd:annotation>
+            <xsd:documentation>
+                Variable length data consists of a pair elements:
+                length field and data field. Length of varData field is transmitted
+                in length field.
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="sbe:compositeDataType">
+                <xsd:sequence>
+                    <xsd:element name="length" type="sbe:encodedDataType" />
+                    <xsd:element name="varData" type="sbe:encodedDataType" />
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="groupSizeType" mixed="true">
+        <xsd:annotation>
+            <xsd:documentation>
+                Standard layout of group dimensions
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+            <xsd:extension base="sbe:compositeDataType">
+                <xsd:sequence>
+                    <xsd:element name="blockLength" type="sbe:encodedDataType">
+                        <xsd:annotation>
+                            <xsd:documentation>Length of a group entry</xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="numInGroup" type="sbe:encodedDataType">
+                        <xsd:annotation>
+                            <xsd:documentation>Number of entries in a group
+                            </xsd:documentation>
+                        </xsd:annotation>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:extension>
+        </xsd:complexContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="enumType" mixed="true">
+        <xsd:annotation>
+            <xsd:documentation>
+                An enumeration of valid values
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="validValue" type="sbe:validValue"
+                        maxOccurs="unbounded" />
+        </xsd:sequence>
+        <xsd:attribute name="name" type="sbe:symbolicName_t" use="required" />
+        <xsd:attribute name="encodingType" type="sbe:symbolicName_t"
+                      use="required" />
+        <xsd:attribute name="description" type="xsd:string" use="optional" />
+        <xsd:attribute name="sinceVersion" type="xsd:nonNegativeInteger"
+                      default="0" />
+    </xsd:complexType>
+
+    <xsd:complexType name="validValue">
+        <xsd:annotation>
+            <xsd:documentation>
+                Valid value as a string
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:token">
+                <xsd:attribute name="name" type="sbe:symbolicName_t" use="required" />
+                <xsd:attribute name="description" type="xsd:string"
+                              use="optional" />
+                <xsd:attribute name="sinceVersion" type="xsd:nonNegativeInteger"
+                              default="0" />
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="setType" mixed="true">
+        <xsd:annotation>
+            <xsd:documentation>
+                A multi value choice (bitset)
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+            <xsd:element name="choice" type="sbe:choice" maxOccurs="64" />
+        </xsd:sequence>
+        <xsd:attribute name="name" type="sbe:symbolicName_t" use="required" />
+        <xsd:attribute name="encodingType" type="sbe:symbolicName_t"
+                      use="required" />
+        <xsd:attribute name="description" type="xsd:string" use="optional" />
+        <xsd:attribute name="sinceVersion" type="xsd:nonNegativeInteger"
+                      default="0" />
+    </xsd:complexType>
+
+    <xsd:complexType name="choice">
+        <xsd:annotation>
+            <xsd:documentation>
+                A choice within a multi value set
+                Value is the
+                position within a bitset (zero-based index).
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:nonNegativeInteger">
+                <xsd:attribute name="name" type="sbe:symbolicName_t" use="required" />
+                <xsd:attribute name="description" type="xsd:string"
+                              use="optional" />
+                <xsd:attribute name="sinceVersion" type="xsd:nonNegativeInteger"
+                              default="0" />
+            </xsd:extension>
+        </xsd:simpleContent>
+    </xsd:complexType>
+
+    <xsd:complexType name="fieldType">
+        <xsd:annotation>
+            <xsd:documentation>
+                A field of a message of a specified dataType
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attribute name="name" type="sbe:symbolicName_t" use="required" />
+        <xsd:attribute name="id" type="xsd:unsignedShort" use="required" />
+        <!-- A simple or composite encoding type -->
+        <xsd:attribute name="type" type="sbe:symbolicName_t" use="required" />
+        <!-- Reference to a validValue by name -->
+        <xsd:attribute name="valueRef" type="sbe:symbolicName_t" use="optional" />
+        <xsd:attribute name="description" type="xsd:string" use="optional" />
+        <!-- Offset from start of a block -->
+        <xsd:attribute name="offset" type="xsd:unsignedInt" use="optional" />
+        <!-- start of time period - default is UNIX epoch -->
+        <xsd:attribute name="epoch" type="xsd:string" default="unix" />
+        <!-- time period - default is nanosecond -->
+        <xsd:attribute name="timeUnit" type="xsd:string"
+                      default="nanosecond" />
+        <xsd:attributeGroup ref="sbe:fieldAttributes" />
+    </xsd:complexType>
+
+    <xsd:attributeGroup name="fieldAttributes">
+        <xsd:attribute name="sinceVersion" type="xsd:nonNegativeInteger"
+                      default="0">
+            <xsd:annotation>
+                <xsd:documentation>
+                    The schema version in which a field was added
+                </xsd:documentation>
+            </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="semanticType" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>
+                    Enumeration of semantic data types
+                </xsd:documentation>
+            </xsd:annotation>
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:token">
+                    <xsd:enumeration value="int" />
+                    <xsd:enumeration value="Length" />
+                    <xsd:enumeration value="TagNum" />
+                    <xsd:enumeration value="SeqNum" />
+                    <xsd:enumeration value="NumInGroup" />
+                    <xsd:enumeration value="DayOfMonth" />
+                    <xsd:enumeration value="float" />
+                    <xsd:enumeration value="Qty" />
+                    <xsd:enumeration value="Price" />
+                    <xsd:enumeration value="Amt" />
+                    <xsd:enumeration value="Percentage" />
+                    <xsd:enumeration value="char" />
+                    <xsd:enumeration value="Boolean" />
+                    <xsd:enumeration value="String" />
+                    <xsd:enumeration value="MultipleCharValue" />
+                    <xsd:enumeration value="MultipleStringValue" />
+                    <xsd:enumeration value="Country" />
+                    <xsd:enumeration value="Currency" />
+                    <xsd:enumeration value="Exchange" />
+                    <xsd:enumeration value="MonthYear" />
+                    <xsd:enumeration value="UTCTimestamp" />
+                    <xsd:enumeration value="UTCTimeOnly" />
+                    <xsd:enumeration value="UTCDateOnly" />
+                    <xsd:enumeration value="LocalMktDate" />
+                    <xsd:enumeration value="TZTimeOnly" />
+                    <xsd:enumeration value="TZTimestamp" />
+                    <xsd:enumeration value="data" />
+                    <xsd:enumeration value="Pattern" />
+                    <xsd:enumeration value="Reserved100Plus" />
+                    <xsd:enumeration value="Reserved1000Plus" />
+                    <xsd:enumeration value="Reserved4000Plus" />
+                    <xsd:enumeration value="XMLData" />
+                    <xsd:enumeration value="Language" />
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:attribute>
+    </xsd:attributeGroup>
+
+    <xsd:attributeGroup name="encodingAttributes">
+        <xsd:annotation>
+            <xsd:documentation>Reserved names for composite type subfields
+            </xsd:documentation>
+        </xsd:annotation>
+        <xsd:attribute name="subFieldEncodingName" use="optional">
+            <xsd:simpleType>
+                <xsd:restriction base="xsd:token">
+                    <!-- decimal encoding subfield names -->
+                    <xsd:enumeration value="mantissa" />
+                    <xsd:enumeration value="exponent" />
+                    <!-- MonthYear subfield names -->
+                    <xsd:enumeration value="year" />
+                    <xsd:enumeration value="month" />
+                    <xsd:enumeration value="day" />
+                    <xsd:enumeration value="week" />
+                    <!-- TZ time subfield names -->
+                    <xsd:enumeration value="time" />
+                    <xsd:enumeration value="timezoneHour" />
+                    <xsd:enumeration value="timezoneMinute" />
+                </xsd:restriction>
+            </xsd:simpleType>
+        </xsd:attribute>
+    </xsd:attributeGroup>
+
+    <xsd:simpleType name="symbolicName_t">
+        <xsd:restriction base="xsd:string">
+            <xsd:minLength value="1"/>
+            <xsd:maxLength value="64"/>
+            <xsd:pattern value="([A-Z]|[a-z]|_)([0-9]|[A-Z]|[a-z]|_)*"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+</xsd:schema>
