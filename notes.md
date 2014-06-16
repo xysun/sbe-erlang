@@ -6,6 +6,11 @@
 #### Erlang
 
 * [efficiency guide](http://erlang.org/doc/efficiency_guide/)
+* install `erlsom`: 
+    * `git clone "git@github.com:danw/erlsom.git"
+    * move the erlsom/ directory to /usr/local/lib/erlang/lib/
+    * cd /usr/local/lib/erlang/lib/erlsom, makedir ebin
+    * `cd src/`, open erlang shell, `make:all([{outdir, "../ebin"}]).`
 
 #### SBE
 * build & run example

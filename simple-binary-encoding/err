@@ -1,8 +1,0 @@
-Buildfile: build.xml
-
-examples:execjava:
-     [java] 
-     [java] *** Basic Stub Example ***
-
-BUILD SUCCESSFUL
-Total time: 1 second
