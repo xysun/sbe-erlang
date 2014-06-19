@@ -1,4 +1,5 @@
 *.beam
+*.dump
 *.swp
 tmp/
 email
