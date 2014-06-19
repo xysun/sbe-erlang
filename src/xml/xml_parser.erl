@@ -5,7 +5,7 @@
 
 findTypes(Node) -> 
     SimpleTypes_XPATH = "/messageSchema/types/type",
-    CompositeTypes_XPATH = "/messageSchema/types/composite[@name!='messageHeader']/type",
+    VarDataTypes_XPATH = "/messageSchema/types/composite[type/@length='0']",
     
     PrimitiveTypeMap = lists:foldl(
         fun(#primitiveType{} = T, Acc) ->  
@@ -22,7 +22,17 @@ findTypes(Node) ->
                 addTypeWithNameCheck(Name, NewSimpleType, Acc)
             end, PrimitiveTypeMap, SimpleTypeNodes
         ),
-    SimpleTypeMap.
+
+    VarDataTypeNodes = xmerl_xpath:string(VarDataTypes_XPATH, Node),
+    TypeMap = lists:foldl(
+        fun(Node, Acc) ->
+            NewVarDataType = createVarDataType(Node),
+            Name = NewVarDataType#varDataType.name,
+            addTypeWithNameCheck(Name, NewVarDataType, Acc)
+        end, SimpleTypeMap, VarDataTypeNodes
+    ),
+
+    TypeMap.
 
 % add new type to typemap, with name check
 addTypeWithNameCheck(Name, Type, TypeMap) -> 
@@ -31,7 +41,7 @@ addTypeWithNameCheck(Name, Type, TypeMap) ->
        true -> dict:store(Name, Type, TypeMap)
     end.
 
-% generate a SimpleType record
+% generate a SimpleType record from an attributes dictionary
 createSimpleType(D) -> 
     Name = dict:fetch(name, D), 
     PrimitiveType = dict:fetch(primitiveType, D),
@@ -40,6 +50,16 @@ createSimpleType(D) ->
     #simpleType{name = Name, 
                 primitiveType = PrimitiveType,
                 length = Length}.
+
+createVarDataType(Node) ->
+    Attributes = utils:getAttributesDict(Node),
+    Name = dict:fetch(name, Attributes),
+    [LengthNode|_] = xmerl_xpath:string("type[@name='length']", Node),
+    [DataNode|_] = xmerl_xpath:string("type[@name='varData']", Node),
+    LengthNodeAttributes = utils:getAttributesDict(LengthNode),
+    DataNodeAttributes = utils:getAttributesDict(DataNode),
+    #varDataType{name = Name,
+                 lengthPrimitiveType = dict:fetch(primitiveType, LengthNodeAttributes)}.
 
 % find messages in xml and store in messageMap
 findMessages(Node) ->
@@ -80,7 +100,6 @@ parse(Filename) ->
     generator:generate(MessageSchema, TypeMap, MessageMap),
 
     TypeMap.
-    
 
 
 main() ->

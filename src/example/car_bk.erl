@@ -1,4 +1,4 @@
--module(car).
+-module(car_bk).
 -compile(export_all).
 
 % "flyweight" fields
@@ -61,7 +61,7 @@ getsomeNumbers({Buffer, Offset, Limit}, Index) ->
 
 % fixed-length string
 vehicleCodeLength() -> 6.
-vehicleCodeCharacterEncoding() -> us_ascii.
+vehicleCodeCharacterEncoding() -> utf8.
 
 setvehicleCode(Value, SrcOffset) -> 
     fun({Buffer, Offset, Limit}) ->
@@ -80,11 +80,10 @@ getvehicleCode({Buffer, Offset, Limit}, Index) ->
     end.
 
 % variable-length string
-makeCharacterEncoding() -> us_ascii.
-modelCharacterEncoding() -> us_ascii.
-makeMetaAttribute(semantic_type) -> "Make".
+makeCharacterEncoding() -> utf8.
+makeMetaAttribute(semanticType) -> "Make".
 
-setMake(Src, SrcOffset, Length) -> 
+setmake(Src, SrcOffset, Length) -> 
     fun({Buffer, Offset, Limit}) -> 
         SizeOfLengthField = 1,
         NewLimit = limit(Buffer, Limit + SizeOfLengthField + Length), 
@@ -93,7 +92,7 @@ setMake(Src, SrcOffset, Length) ->
         {NewBuffer2, Offset, NewLimit}
     end.
 
-getMake({Buffer, Offset, Limit}, Length) -> 
+getmake({Buffer, Offset, Limit}, Length) -> 
     SizeofLengthField = 1,
     buffer:checkLimit(Buffer, Limit + SizeofLengthField),
     DataLength = buffer:uint8Get(Buffer, Limit, little), 
@@ -101,7 +100,9 @@ getMake({Buffer, Offset, Limit}, Length) ->
     NewLimit = limit(Buffer, Limit + SizeofLengthField + DataLength),
     {{Buffer, Offset, NewLimit}, buffer:charsGet(Buffer, Limit + SizeofLengthField, BytesCopied)}.
 
-setModel(Src, SrcOffset, Length) -> 
+
+modelCharacterEncoding() -> utf8.
+setmodel(Src, SrcOffset, Length) -> 
      fun({Buffer, Offset, Limit}) -> 
         SizeOfLengthField = 1,
         NewLimit = limit(Buffer, Limit + SizeOfLengthField + Length), 
@@ -110,7 +111,7 @@ setModel(Src, SrcOffset, Length) ->
         {NewBuffer2, Offset, NewLimit}
     end.
 
-getModel({Buffer, Offset, Limit}, Length) -> 
+getmodel({Buffer, Offset, Limit}, Length) -> 
     SizeofLengthField = 1,
     buffer:checkLimit(Buffer, Limit + SizeofLengthField),
     DataLength = buffer:uint8Get(Buffer, Limit, little), 

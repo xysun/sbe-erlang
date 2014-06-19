@@ -78,8 +78,8 @@ encode(Buffer, Offset) ->
                 car:setserialNumber(1234), % uint64
                 car:setmodelYear(2023), % uint16
                 car:setvehicleCode(VehicleCode, SrcOffset),
-                car:setMake(Make, SrcOffset,size(Make)),
-                car:setModel(Model, SrcOffset, size(Model))
+                car:setmake(Make, SrcOffset,size(Make)),
+                car:setmodel(Model, SrcOffset, size(Model))
             ]
         ),
     
@@ -108,13 +108,14 @@ decode(Buffer, Offset, ActingBlockLength, SchemaId, ActingVersion) ->
                       lists:foldl(fun(X, Acc) -> [car:getvehicleCode(Message, X)|Acc] end,
                       [],
                       lists:seq(0, car:vehicleCodeLength() - 1))),
-    io:format("~ncar.vehicleCode = ~p", [string:join(VehicleCode,"")]),
+    %io:format("~p", [VehicleCode]),
+    io:format("~ncar.vehicleCode = ~p", [VehicleCode]),
     
-    io:format("~ncar.make.semanticType = ~p", [car:makeMetaAttribute(semantic_type)]),
-    {Message2, Make} = car:getMake(Message, 128),
+    io:format("~ncar.make.semanticType = ~p", [car:makeMetaAttribute(semanticType)]),
+    {Message2, Make} = car:getmake(Message, 128),
     io:format("~ncar.make = ~p", [Make]), 
     
-    {Message3, Model} = car:getModel(Message2, 128),
+    {Message3, Model} = car:getmodel(Message2, 128),
     io:format("~ncar.model = ~p", [Model]),
     
     io:format("~ncar.size = ~p", [car:getSize(Message3)]),

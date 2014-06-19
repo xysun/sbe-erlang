@@ -66,5 +66,10 @@
 -record(simpleType, {name,
                      primitiveType,
                      length=1,
-                     characterEncoding=us_ascii}).
+                     characterEncoding=utf8}).
+
+% composite variable length type
+-record(varDataType, {name,
+                      lengthPrimitiveType,
+                      characterEncoding=utf8}).
 

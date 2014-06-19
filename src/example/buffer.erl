@@ -82,7 +82,7 @@ uint64Get(Buffer, Offset, Endian) -> uGet(64, Buffer, Offset, Endian).
 int32Put(Buffer, Offset, Value, Endian) -> iPut(32, Buffer, Offset, Value, Endian).
 int32Get(Buffer, Offset, Endian) -> iGet(32, Buffer, Offset, Endian).
 
-% char
+% char, default us_ascii encoding
 charsPut(Buffer, Offset, Value, SrcOffset, Length) -> 
     OffsetInBits = 8 * Offset,
     SrcOffsetInBits = 8 * SrcOffset,
@@ -104,15 +104,16 @@ charsGet(Buffer, Offset, Length) ->
 charGet(Buffer, Offset) -> 
     OffsetInBits = 8 * Offset, 
     case Buffer of
-        <<_:OffsetInBits, Value:8/bitstring, _/binary>> ->
-            binary:bin_to_list(Value)
+        <<_:OffsetInBits, Value/utf8, _/binary>> ->
+            %binary:bin_to_list(Value)
+            Value
     end.
 
 
 charPut(Buffer, Offset, Value) ->
     OffsetInBits = 8 * Offset,
     case Buffer of
-        <<Header:OffsetInBits, _:8/bitstring, Rest/binary>> ->
-            <<Header:OffsetInBits, Value:8/bitstring, Rest/binary>>
+        <<Header:OffsetInBits, _/utf8, Rest/binary>> ->
+            <<Header:OffsetInBits, Value/utf8, Rest/binary>>
     end.
 

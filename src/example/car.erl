@@ -55,7 +55,7 @@ setsomeNumbers(Index, Value) ->
 
 vehicleCodeLength() -> 6.
 
-vehicleCodeCharacterEncoding() -> us_ascii.
+vehicleCodeCharacterEncoding() -> utf8.
 
 getvehicleCode({Buffer, Offset, Limit}, Index) ->
     if Index < 0; Index >= 6 -> error(index_out_of_range);
@@ -74,3 +74,43 @@ setvehicleCode(Value, SrcOffset) ->
     end.
 
 sbeBlockLength() -> 36.
+
+makeCharacterEncoding() -> utf8.
+
+makeMetaAttribute(semanticType) -> "Make".
+
+getmake({Buffer, Offset, Limit}, Length) ->
+    SizeofLengthField = 1,
+    buffer:checkLimit(Buffer, Limit + SizeofLengthField),
+    DataLength = buffer:uint8Get(Buffer, Limit, little),
+    BytesCopied = min(Length, DataLength),
+    NewLimit = limit(Buffer, Limit + SizeofLengthField + DataLength),
+    {{Buffer, Offset, NewLimit}, buffer:charsGet(Buffer, Limit + SizeofLengthField, BytesCopied)}.
+
+setmake(Src, SrcOffset, Length) ->
+    fun({Buffer, Offset, Limit}) ->
+        SizeOfLengthField = 1,
+        NewLimit = limit(Buffer, Limit + SizeOfLengthField + Length),
+        NewBuffer = buffer:uint8Put(Buffer, Limit, Length, little),
+        NewBuffer2 = buffer:charsPut(NewBuffer, Limit + SizeOfLengthField, Src, SrcOffset, Length),
+        {NewBuffer2, Offset, NewLimit}
+    end.
+
+modelCharacterEncoding() -> utf8.
+
+getmodel({Buffer, Offset, Limit}, Length) ->
+    SizeofLengthField = 1,
+    buffer:checkLimit(Buffer, Limit + SizeofLengthField),
+    DataLength = buffer:uint8Get(Buffer, Limit, little),
+    BytesCopied = min(Length, DataLength),
+    NewLimit = limit(Buffer, Limit + SizeofLengthField + DataLength),
+    {{Buffer, Offset, NewLimit}, buffer:charsGet(Buffer, Limit + SizeofLengthField, BytesCopied)}.
+
+setmodel(Src, SrcOffset, Length) ->
+    fun({Buffer, Offset, Limit}) ->
+        SizeOfLengthField = 1,
+        NewLimit = limit(Buffer, Limit + SizeOfLengthField + Length),
+        NewBuffer = buffer:uint8Put(Buffer, Limit, Length, little),
+        NewBuffer2 = buffer:charsPut(NewBuffer, Limit + SizeOfLengthField, Src, SrcOffset, Length),
+        {NewBuffer2, Offset, NewLimit}
+    end.

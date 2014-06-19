@@ -33,8 +33,64 @@ generateMessageStub(MessageSchema, TypeMap, MessageNode) ->
 
     io:format(IoDevice, 
         "~n~nsbeBlockLength() -> ~w.", [BlockLength]),
+
+    % generate methods for variable-length string
+    DataNodes = xmerl_xpath:string("data", MessageNode),
+    lists:foreach(
+        fun(DataNode) -> generateVarDataMethods(IoDevice, MessageSchema, DataNode, TypeMap) end, DataNodes),
         
     file:close(IoDevice).
+
+
+% generate methods for variable-length string
+
+generateVarDataMethods(IoDevice, MessageSchema, DataNode, TypeMap) -> 
+    Endian = getSchemaEndian(MessageSchema),
+    Attributes = utils:getAttributesDict(DataNode),
+    Name = dict:fetch(name, Attributes),
+    TypeName = dict:fetch(type, Attributes),
+    Type = dict:fetch(TypeName, TypeMap),
+    LengthPrimitiveTypeName = Type#varDataType.lengthPrimitiveType,
+    LengthPrimitiveType = dict:fetch(LengthPrimitiveTypeName, TypeMap),
+    LengthFieldSize = LengthPrimitiveType#primitiveType.size,
+    
+    % characterEncoding
+    io:format(IoDevice,
+        "~n~n~sCharacterEncoding() -> utf8.", [Name]),
+    
+    % semanticType        
+    HasSemanticType = dict:is_key(semanticType, Attributes),
+    if HasSemanticType ->
+        SemanticType = dict:fetch(semanticType, Attributes),
+        io:format(IoDevice,
+            "~n~n~sMetaAttribute(semanticType) -> ~p.", [Name, SemanticType]);
+        true -> ok
+    end,
+
+    % get
+    io:format(IoDevice,
+        "~n~nget~s({Buffer, Offset, Limit}, Length) ->"
+        ++ "~n    SizeofLengthField = ~w,"
+        ++ "~n    buffer:checkLimit(Buffer, Limit + SizeofLengthField),"
+        ++ "~n    DataLength = buffer:~sGet(Buffer, Limit, ~w),"
+        ++ "~n    BytesCopied = min(Length, DataLength),"
+        ++ "~n    NewLimit = limit(Buffer, Limit + SizeofLengthField + DataLength),"
+        ++ "~n    {{Buffer, Offset, NewLimit}, buffer:charsGet(Buffer, Limit + SizeofLengthField, BytesCopied)}.",
+        [Name, LengthFieldSize, LengthPrimitiveTypeName, Endian]),
+
+    % set
+    io:format(IoDevice,
+        "~n~nset~s(Src, SrcOffset, Length) ->"
+        ++ "~n    fun({Buffer, Offset, Limit}) ->"
+        ++ "~n        SizeOfLengthField = ~w,"
+        ++ "~n        NewLimit = limit(Buffer, Limit + SizeOfLengthField + Length),"
+        ++ "~n        NewBuffer = buffer:~sPut(Buffer, Limit, Length, ~w),"
+        ++ "~n        NewBuffer2 = buffer:charsPut(NewBuffer, Limit + SizeOfLengthField, Src, SrcOffset, Length),"
+        ++ "~n        {NewBuffer2, Offset, NewLimit}"
+        ++ "~n    end.",
+        [Name, LengthFieldSize, LengthPrimitiveTypeName, Endian]),
+
+    ok.
 
 
 % write fixed-length datatype methods
@@ -42,12 +98,7 @@ generateMessageStub(MessageSchema, TypeMap, MessageNode) ->
 % return Size
 
 generateFixedLengthMethods(IoDevice, MessageSchema, FieldNode, TypeMap, Offset) ->
-    SchemaEndian = utils:fetchWithDefault(byteOrder, MessageSchema, "littleEndian"),
-    Endian = case SchemaEndian of
-        "littleEndian" -> little;
-        "bigEndian" -> big;
-        _ -> error(undefined_endian)
-    end,
+    Endian = getSchemaEndian(MessageSchema),
     FieldAttributes = utils:getAttributesDict(FieldNode),
     FieldName = dict:fetch(name, FieldAttributes),
     TypeName = dict:fetch(type, FieldAttributes),
@@ -89,14 +140,14 @@ generateSimpleTypeMethods(IoDevice, TypeMap, FieldName, Type, Offset, Endian) ->
 
 
 % fixed-length string
-% assuming character encoding is always us_ascii
+% assuming character encoding is always utf8
 generateFixedLengthString(IoDevice, FieldName, Length, Offset) -> 
     io:format(IoDevice, 
         "~n~n~sLength() -> ~w.",
         [FieldName, Length]),
     
     io:format(IoDevice,
-        "~n~n~sCharacterEncoding() -> us_ascii.", [FieldName]),
+        "~n~n~sCharacterEncoding() -> utf8.", [FieldName]),
 
     io:format(IoDevice,
         "~n~nget~s({Buffer, Offset, Limit}, Index) ->"
@@ -245,3 +296,12 @@ generateFileHeader(IoDevice, ModuleName) ->
     io:format(IoDevice, "-module(~s).~n-compile(export_all).", [ModuleName]).
 
 
+getSchemaEndian(MessageSchema) -> 
+    SchemaEndian = utils:fetchWithDefault(byteOrder, MessageSchema, "littleEndian"),
+    Endian = case SchemaEndian of
+        "littleEndian" -> little;
+        "bigEndian" -> big;
+        _ -> error(undefined_endian)
+    end,
+    Endian.
+   
