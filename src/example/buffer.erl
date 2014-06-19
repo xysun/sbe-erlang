@@ -107,3 +107,12 @@ charGet(Buffer, Offset) ->
         <<_:OffsetInBits, Value:8/bitstring, _/binary>> ->
             binary:bin_to_list(Value)
     end.
+
+
+charPut(Buffer, Offset, Value) ->
+    OffsetInBits = 8 * Offset,
+    case Buffer of
+        <<Header:OffsetInBits, _:8/bitstring, Rest/binary>> ->
+            <<Header:OffsetInBits, Value:8/bitstring, Rest/binary>>
+    end.
+

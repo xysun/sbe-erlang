@@ -26,3 +26,8 @@ tear_down(_) -> ok.
 
 test_uint16Put(Buffer) -> 
     [?_assertEqual(<<0, 0, 2, 1, 0, 0, 0, 0>>, buffer:uint16Put(Buffer, 2, 258))].
+
+% TODO:
+
+% test capfirst, lowerfirst
+% test fetchwithdefault

@@ -77,9 +77,9 @@ encode(Buffer, Offset) ->
             [
                 car:setserialNumber(1234), % uint64
                 car:setmodelYear(2023), % uint16
-                car:putvehicleCode(VehicleCode, SrcOffset),
-                car:putMake(Make, SrcOffset,size(Make)),
-                car:putModel(Model, SrcOffset, size(Model))
+                car:setvehicleCode(VehicleCode, SrcOffset),
+                car:setMake(Make, SrcOffset,size(Make)),
+                car:setModel(Model, SrcOffset, size(Model))
             ]
         ),
     
