@@ -107,7 +107,7 @@ generateFixedLengthMethods(IoDevice, MessageSchema, FieldNode, TypeMap, Offset) 
         #simpleType{} -> generateSimpleTypeMethods(IoDevice, TypeMap, FieldName, Type, Offset, Endian);
         _ -> 0
     end,
-    io:format("size:~w~n", [Size]),
+    %io:format("size:~w~n", [Size]),
     Size.
 
 
