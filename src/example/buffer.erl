@@ -2,9 +2,14 @@
 % these are not "real" buffers though..
 
 -module(buffer).
--compile(export_all).
+-export([allocate/1, chainFunctions/2, checkLimit/2,
+         charGet/2, charPut/3, charsGet/3, charsPut/5,
+         uint8Get/3, uint8Put/4, int8Get/3, int8Put/4,
+         uint16Get/3, uint16Put/4, int16Get/3, int16Put/4,
+         uint32Get/3, uint32Put/4, int32Get/3, int32Put/4,
+         uint64Get/3, uint64Put/4, int64Get/3, int64Put/4]).
 
-
+% helper functions
 % allocate x bytes
 allocate(Capacity) -> << <<0>> || _ <- util:int_to_list(Capacity) >>.
 
@@ -12,6 +17,11 @@ checkLimit(Buffer, Limit) ->
     if Limit > size(Buffer) -> error(limit_beyond_capacity);
        true -> ok
     end.
+
+% chain functions using last argument
+chainFunctions(X, [F_head]) -> F_head(X);
+chainFunctions(X, [F_head|F_tail]) -> chainFunctions(F_head(X), F_tail).
+
 
 % Size is in bits
 % unsigned Put
@@ -73,14 +83,23 @@ iGet(Size, Buffer, Offset, big) ->
 
 uint8Put(Buffer, Offset, Value, Endian) -> uPut(8, Buffer, Offset, Value, Endian).
 uint16Put(Buffer, Offset, Value, Endian) -> uPut(16, Buffer, Offset, Value, Endian).
+uint32Put(Buffer, Offset, Value, Endian) -> uPut(32, Buffer, Offset, Value, Endian).
 uint64Put(Buffer, Offset, Value, Endian) -> uPut(64, Buffer, Offset, Value, Endian).
 
 uint8Get(Buffer, Offset, Endian) -> uGet(8, Buffer, Offset, Endian).
 uint16Get(Buffer, Offset, Endian) -> uGet(16, Buffer, Offset, Endian).
+uint32Get(Buffer, Offset, Endian) -> uGet(32, Buffer, Offset, Endian).
 uint64Get(Buffer, Offset, Endian) -> uGet(64, Buffer, Offset, Endian).
 
+int8Put(Buffer, Offset, Value, Endian) -> iPut(8, Buffer, Offset, Value, Endian).
+int16Put(Buffer, Offset, Value, Endian) -> iPut(16, Buffer, Offset, Value, Endian).
 int32Put(Buffer, Offset, Value, Endian) -> iPut(32, Buffer, Offset, Value, Endian).
+int64Put(Buffer, Offset, Value, Endian) -> iPut(64, Buffer, Offset, Value, Endian).
+
+int8Get(Buffer, Offset, Endian) -> iGet(8, Buffer, Offset, Endian).
+int16Get(Buffer, Offset, Endian) -> iGet(16, Buffer, Offset, Endian).
 int32Get(Buffer, Offset, Endian) -> iGet(32, Buffer, Offset, Endian).
+int64Get(Buffer, Offset, Endian) -> iGet(64, Buffer, Offset, Endian).
 
 % char, default us_ascii encoding
 charsPut(Buffer, Offset, Value, SrcOffset, Length) -> 

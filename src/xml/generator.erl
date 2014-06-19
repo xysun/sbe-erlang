@@ -282,10 +282,13 @@ generateMessageHeader(Attributes) ->
 generateMessageHeaderMethods(IoDevice, Name, #primitiveType{} = P, Offset, Endian) ->
     % set methods
     io:format(IoDevice,
-        "~n~nset~s({Buffer, Offset, MessageTemplateVersion}, ~s) ->"
-        ++"~n    NewBuffer = buffer:~sPut(Buffer, Offset + ~w, ~s, ~w),"
-        ++"~n    {NewBuffer, Offset, MessageTemplateVersion}.",
+        "~n~nset~s(~s) ->"
+        ++"~n    fun({Buffer, Offset, MessageTemplateVersion}) ->"
+        ++"~n        NewBuffer = buffer:~sPut(Buffer, Offset + ~w, ~s, ~w),"
+        ++"~n        {NewBuffer, Offset, MessageTemplateVersion}"
+        ++"~n    end.",
         [Name, Name, P#primitiveType.name, Offset, Name, Endian]),
+    
     % get methods
     io:format(IoDevice,
         "~n~nget~s({Buffer, Offset, _}) ->"

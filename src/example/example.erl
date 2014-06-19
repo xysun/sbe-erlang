@@ -7,15 +7,16 @@ main() ->
     BufferOffset = 0,
     MessageTemplateVersion = 0,
     % encode a message
-    % TODO: allow chain_last
-    MH1 = messageHeader:wrap(Buffer, BufferOffset, MessageTemplateVersion),
-    MH2 = messageHeader:setBlockLength(MH1, car:sbeBlockLength()),
-    MH3 = messageHeader:setTemplateId(MH2, car:sbeTemplateId()),
-    MH4 = messageHeader:setSchemaId(MH3, car:sbeSchemaId()),
-    MH5 = messageHeader:setVersion(MH4, car: sbeSchemaVersion()),
+    MessageHeader = buffer:chainFunctions(
+        messageHeader:wrap(Buffer, BufferOffset, MessageTemplateVersion),
+        [messageHeader:setBlockLength(car:sbeBlockLength()),
+         messageHeader:setTemplateId(car:sbeTemplateId()),
+         messageHeader:setSchemaId(car:sbeSchemaId()),
+         messageHeader:setVersion(car:sbeSchemaVersion())]
+    ),
 
     HeaderOffset = BufferOffset + messageHeader:size(),
-    {EncodeBuffer, _, _} = MH5,
+    {EncodeBuffer, _, _} = MessageHeader,
     {MessageBuffer, _, _} = encode(EncodeBuffer, HeaderOffset),
 
     % optionally write the encoded buffer to a file for decoding
@@ -40,8 +41,7 @@ main() ->
            SchemaId,
            ActingVersion),
     
-    MessageBuffer.
-
+    ok.
 
 readJava() -> 
     {ok, Binary} = file:read_file("car_erlang"),
@@ -72,36 +72,36 @@ encode(Buffer, Offset) ->
     Make = list_to_binary("Honda"),
     Model = list_to_binary("Civic VTi"),
     Message = 
-        util:chain_last(
+        buffer:chainFunctions(
             car:wrapForEncode(Buffer, Offset), 
             [
-                car:setserialNumber(1234), % uint64
-                car:setmodelYear(2023), % uint16
+                car:setserialNumber(1234), 
+                car:setmodelYear(2023), 
                 car:setvehicleCode(VehicleCode, SrcOffset),
-                car:setmake(Make, SrcOffset,size(Make)),
+                car:setmake(Make, SrcOffset, size(Make)),
                 car:setmodel(Model, SrcOffset, size(Model))
             ]
         ),
     
     Message2 = 
-        util:chain_last(
+        buffer:chainFunctions(
             Message,
-            [car:setsomeNumbers(X, X) || X <- util:int_to_list(car:someNumbersLength())]
+            [car:setsomeNumbers(X, X) || X <- int_to_list(car:someNumbersLength())]
         ),
     
     Message2.
 
 decode(Buffer, Offset, ActingBlockLength, SchemaId, ActingVersion) -> 
     Message = car:wrapForDecode(Buffer, Offset, ActingBlockLength, ActingVersion), 
-    io:format("~ncar.templateId = ~p", [car:sbeTemplateId()]),
-    io:format("~ncar.schemaId = ~p", [SchemaId]),
-    io:format("~ncar.schemaVersion = ~p", [car:sbeSchemaVersion()]),
-    io:format("~ncar.serialNumber = ~p", [car:getserialNumber(Message)]),
-    io:format("~ncar.modelYear = ~p", [car:getmodelYear(Message)]),
+    io:format("~ncar.templateId = ~w", [car:sbeTemplateId()]),
+    io:format("~ncar.schemaId = ~w", [SchemaId]),
+    io:format("~ncar.schemaVersion = ~w", [car:sbeSchemaVersion()]),
+    io:format("~ncar.serialNumber = ~w", [car:getserialNumber(Message)]),
+    io:format("~ncar.modelYear = ~w", [car:getmodelYear(Message)]),
     
     io:format("~ncar.someNumbers = "),
     lists:foreach(fun(X) -> 
-                    io:format("~p,", [car:getsomeNumbers(Message, X)]) end, 
+                    io:format("~w,", [car:getsomeNumbers(Message, X)]) end, 
                     lists:seq(0, car:someNumbersLength() - 1)),
     
     VehicleCode = lists:reverse(
@@ -121,3 +121,9 @@ decode(Buffer, Offset, ActingBlockLength, SchemaId, ActingVersion) ->
     io:format("~ncar.size = ~p", [car:getSize(Message3)]),
 
     ok.
+
+% helper functions below
+% generate a list of [0, 1,2,...X-1]
+int_to_list(0) -> [];
+int_to_list(X) when X > 0 -> [X-1|int_to_list(X-1)].
+
