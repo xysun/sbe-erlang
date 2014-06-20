@@ -55,15 +55,15 @@
             <arg value="${dir.resources.sbe}/fix-message-samples.xml"/>
         </java>
 
-        <fail unless="protobuf.home" message="protobuf.home is not defined (please add a build-local.properties and define it."/>
+        <!--<fail unless="protobuf.home" message="protobuf.home is not defined (please add a build-local.properties and define it."/>
 
         <exec executable="${protobuf.home}/bin/protoc">
             <arg value="-I${dir.resources.protobuf}"/>
-            <arg value="--java_out"/>
+            <arg value="java_out"/>
             <arg value="${dir.target.perf.java}"/>
             <arg value="${dir.resources.protobuf}/car.proto"/>
             <arg value="${dir.resources.protobuf}/fix-messages.proto"/>
-        </exec>
+        </exec>-->
     </target>
 
     <target name="java:compile" depends="clean, init, java:codegen">
@@ -77,7 +77,7 @@
             <compilerarg value="${dir.target.perf.java}"/>
         </javac>
 
-        <jar destfile="${dir.target.perf.dist}/microbenchmarks.jar">
+        <!--<jar destfile="${dir.target.perf.dist}/microbenchmarks.jar">
             <manifest>
                 <attribute name="Main-Class" value="org.openjdk.jmh.Main"/>
             </manifest>
@@ -96,7 +96,7 @@
             <arg value="-i"/>
             <arg value="3"/>
             <arg value=".*Benchmark.*"/>
-        </exec>
+        </exec>-->
     </target>
     
     <target name="java:perf" depends="">

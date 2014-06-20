@@ -2,6 +2,7 @@ all: compile
 
 compile:
 	erl -make
+	cd java/; ant; ant examples:java; cd ../
 
 sbetool:
 	erl -pa ebin/ -run sbetool main $(schema) $(outputdir) -run init stop -noshell
@@ -20,9 +21,12 @@ erlangread:
 	$(info [***** Testing Erlang read Java generated file ****])
 	cp java/car_java .; erl -pa src/example/ebin/ -run example readJava -run init stop -noshell
 
-perf:
+perf-erlang:
 	erlc -o src/example/ebin src/example/baselinesimple/carbenchmark.erl
 	erl -pa src/example/ebin -run carbenchmark main -run init stop -noshell
+
+perf-java:
+	cd java/; ant -f perf-build.xml java:compile; ant -f perf-build.xml java:perf; cd ../
 
 cleanup:
 	$(info [***** Cleaning up... *****])
