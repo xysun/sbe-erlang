@@ -8,13 +8,12 @@ main() ->
     BufferOffset = 0,
     MessageTemplateVersion = 0,
     % encode a message
-    MessageHeader = buffer:chainFunctions(
-        messageHeader:wrap(Buffer, BufferOffset, MessageTemplateVersion),
-        [messageHeader:setBlockLength(car:sbeBlockLength()),
-         messageHeader:setTemplateId(car:sbeTemplateId()),
-         messageHeader:setSchemaId(car:sbeSchemaId()),
-         messageHeader:setVersion(car:sbeSchemaVersion())]
-    ),
+    
+    M = messageHeader:wrap(Buffer, BufferOffset, MessageTemplateVersion),
+    M1 = messageHeader:setBlockLength(M, car:sbeBlockLength()),
+    M2 = messageHeader:setTemplateId(M1, car:sbeTemplateId()),
+    M3 = messageHeader:setSchemaId(M2, car:sbeSchemaId()),
+    MessageHeader = messageHeader:setVersion(M3, car:sbeSchemaVersion()),
 
     HeaderOffset = BufferOffset + messageHeader:size(),
     {EncodeBuffer, _, _} = MessageHeader,
@@ -72,25 +71,17 @@ encode(Buffer, Offset) ->
     VehicleCode = list_to_binary("abcdef"),
     Make = list_to_binary("Honda"),
     Model = list_to_binary("Civic VTi"),
-    Message = 
-        buffer:chainFunctions(
-            car:wrapForEncode(Buffer, Offset), 
-            [
-                car:setserialNumber(1234), 
-                car:setmodelYear(2023), 
-                car:setvehicleCode(VehicleCode, SrcOffset),
-                car:setmake(Make, SrcOffset, size(Make)),
-                car:setmodel(Model, SrcOffset, size(Model))
-            ]
-        ),
+
+    M = car:wrapForEncode(Buffer, Offset),
+    M1 = car:setserialNumber(M, 1234),
+    M2 = car:setmodelYear(M1, 2023),
+    M3 = car:setvehicleCode(M2, VehicleCode, SrcOffset),
+    M4 = car:setmake(M3, Make, SrcOffset, size(Make)),
+    Message = car:setmodel(M4, Model, SrcOffset, size(Model)),
+
+    lists:foldl(fun(X, AccM) -> car:setsomeNumbers(AccM, X, X) end,
+                Message, lists:seq(0, car:someNumbersLength() - 1)).
     
-    Message2 = 
-        buffer:chainFunctions(
-            Message,
-            [car:setsomeNumbers(X, X) || X <- lists:seq(0, car:someNumbersLength() - 1)]
-        ),
-    
-    Message2.
 
 decode(Buffer, Offset, ActingBlockLength, SchemaId, ActingVersion) -> 
     Message = car:wrapForDecode(Buffer, Offset, ActingBlockLength, ActingVersion), 

@@ -2,7 +2,7 @@
 % these are not "real" buffers though..
 
 -module(buffer).
--export([allocate/1, chainFunctions/2, checkLimit/2,
+-export([allocate/1, checkLimit/2,
          charGet/2, charPut/3, charsGet/3, charsPut/5,
          uint8Get/3, uint8Put/4, int8Get/3, int8Put/4,
          uint16Get/3, uint16Put/4, int16Get/3, int16Put/4,
@@ -17,10 +17,6 @@ checkLimit(Buffer, Limit) ->
     if Limit > size(Buffer) -> error(limit_beyond_capacity);
        true -> ok
     end.
-
-% chain functions using last argument
-chainFunctions(X, [F_head]) -> F_head(X);
-chainFunctions(X, [F_head|F_tail]) -> chainFunctions(F_head(X), F_tail).
 
 % Size is in bits
 % unsigned Put

@@ -77,16 +77,13 @@ generateVarDataMethods(IoDevice, MessageSchema, DataNode, TypeMap) ->
         ++ "~n    {{Buffer, Offset, NewLimit}, buffer:charsGet(Buffer, Limit + SizeofLengthField, BytesCopied)}.",
         [Name, LengthFieldSize, LengthPrimitiveTypeName, Endian]),
 
-    % set
     io:format(IoDevice,
-        "~n~nset~s(Src, SrcOffset, Length) ->"
-        ++ "~n    fun({Buffer, Offset, Limit}) ->"
-        ++ "~n        SizeOfLengthField = ~w,"
-        ++ "~n        NewLimit = limit(Buffer, Limit + SizeOfLengthField + Length),"
-        ++ "~n        NewBuffer = buffer:~sPut(Buffer, Limit, Length, ~w),"
-        ++ "~n        NewBuffer2 = buffer:charsPut(NewBuffer, Limit + SizeOfLengthField, Src, SrcOffset, Length),"
-        ++ "~n        {NewBuffer2, Offset, NewLimit}"
-        ++ "~n    end.",
+        "~n~nset~s({Buffer, Offset, Limit}, Src, SrcOffset, Length) ->"
+        ++ "~n    SizeOfLengthField = ~w,"
+        ++ "~n    NewLimit = limit(Buffer, Limit + SizeOfLengthField + Length),"
+        ++ "~n    NewBuffer = buffer:~sPut(Buffer, Limit, Length, ~w),"
+        ++ "~n    NewBuffer2 = buffer:charsPut(NewBuffer, Limit + SizeOfLengthField, Src, SrcOffset, Length),"
+        ++ "~n    {NewBuffer2, Offset, NewLimit}.",
         [Name, LengthFieldSize, LengthPrimitiveTypeName, Endian]),
 
     ok.
@@ -112,19 +109,19 @@ generateFixedLengthMethods(IoDevice, MessageSchema, FieldNode, TypeMap, Offset) 
 
 
 generatePrimitiveTypeMethods(IoDevice, FieldName, Type, Offset, Endian) ->
-    io:format(IoDevice,
-        "~n~nset~s(Value) ->"
-        ++ "~n    fun({Buffer, Offset, Limit}) ->"
-        ++ "~n        NewBuffer = buffer:~sPut(Buffer, Offset + ~w, Value, ~w),"
-        ++ "~n        {NewBuffer, Offset, Limit}" 
-        ++ "~n    end.",
-        [FieldName, Type#primitiveType.name, Offset, Endian]),
 
+    io:format(IoDevice,
+        "~n~nset~s({Buffer, Offset, Limit}, Value) ->"
+        ++ "~n   NewBuffer = buffer:~sPut(Buffer, Offset + ~w, Value, ~w),"
+        ++ "~n   {NewBuffer, Offset, Limit}.",
+        [FieldName, Type#primitiveType.name, Offset, Endian]),
+   
+    
     io:format(IoDevice,
         "~n~nget~s({Buffer, Offset, Limit}) ->"
         ++ "~n    buffer:~sGet(Buffer, Offset + ~w, ~w).",
         [FieldName, Type#primitiveType.name, Offset, Endian]),
-
+    
     Type#primitiveType.size.
 
 
@@ -155,19 +152,18 @@ generateFixedLengthString(IoDevice, FieldName, Length, Offset) ->
         ++ "~n    end.",
         [FieldName, Length, Offset]),
     
-    io:format(IoDevice,
-        "~n~nset~s(Value, SrcOffset) ->"
-        ++ "~n    fun({Buffer, Offset, Limit}) ->"
-        ++ "~n        Length = ~w,"
-        ++ "~n        if SrcOffset < 0; SrcOffset > size(Value) - Length"
-        ++ "~n            -> error(srcOffset_out_of_range_for_copy);"
-        ++ "~n        true ->"
-        ++ "~n            NewBuffer = buffer:charsPut(Buffer, Offset + ~w, Value, SrcOffset, Length),"
-        ++ "~n            {NewBuffer, Offset, Limit}"
-        ++ "~n        end"
+     io:format(IoDevice,
+        "~n~nset~s({Buffer, Offset, Limit}, Value, SrcOffset) ->"
+        ++ "~n    Length = ~w,"
+        ++ "~n    if SrcOffset < 0; SrcOffset > size(Value) - Length"
+        ++ "~n        -> error(srcOffset_out_of_range_for_copy);"
+        ++ "~n    true ->"
+        ++ "~n        NewBuffer = buffer:charsPut(Buffer, Offset + ~w, Value, SrcOffset, Length),"
+        ++ "~n        {NewBuffer, Offset, Limit}"
         ++ "~n    end.",
         [FieldName, Length, Offset]),
-
+   
+    
     Length.
 
 % generate primitiveType arrays
@@ -187,13 +183,11 @@ generatePrimitiveArrayMethods(IoDevice, FieldName, PrimitiveType, Length, Offset
         [FieldName, Length, PrimitiveTypeName, Offset, UnitSize, Endian]),
 
     io:format(IoDevice,
-        "~n~nset~s(Index, Value) ->"
-        ++ "~n    fun({Buffer, Offset, Limit}) ->"
-        ++ "~n        if Index < 0; Index >= ~w -> erlang:error(index_out_of_range);"
-        ++ "~n            true ->"
-        ++ "~n                NewBuffer = buffer:~sPut(Buffer, Offset + ~w + (~w*Index), Value, ~w),"
-        ++ "~n                {NewBuffer, Offset, Limit}"
-        ++ "~n        end"
+        "~n~nset~s({Buffer, Offset, Limit}, Index, Value) ->"
+        ++ "~n    if Index < 0; Index >= ~w -> erlang:error(index_out_of_range);"
+        ++ "~n        true ->"
+        ++ "~n            NewBuffer = buffer:~sPut(Buffer, Offset + ~w + (~w*Index), Value, ~w),"
+        ++ "~n            {NewBuffer, Offset, Limit}"
         ++ "~n    end.",
         [FieldName, Length, PrimitiveTypeName, Offset, UnitSize, Endian]),
 
@@ -281,11 +275,9 @@ generateMessageHeader(Attributes, OutDir) ->
 generateMessageHeaderMethods(IoDevice, Name, #primitiveType{} = P, Offset, Endian) ->
     % set methods
     io:format(IoDevice,
-        "~n~nset~s(~s) ->"
-        ++"~n    fun({Buffer, Offset, MessageTemplateVersion}) ->"
-        ++"~n        NewBuffer = buffer:~sPut(Buffer, Offset + ~w, ~s, ~w),"
-        ++"~n        {NewBuffer, Offset, MessageTemplateVersion}"
-        ++"~n    end.",
+        "~n~nset~s({Buffer, Offset, MessageTemplateVersion}, ~s) ->"
+        ++"~n    NewBuffer = buffer:~sPut(Buffer, Offset + ~w, ~s, ~w),"
+        ++"~n    {NewBuffer, Offset, MessageTemplateVersion}.",
         [Name, Name, P#primitiveType.name, Offset, Name, Endian]),
     
     % get methods
