@@ -2,7 +2,7 @@
 % these are not "real" buffers though..
 
 -module(buffer).
--export([allocate/1, chainFunctions/2, checkLimit/2, int_to_list/1,
+-export([allocate/1, chainFunctions/2, checkLimit/2,
          charGet/2, charPut/3, charsGet/3, charsPut/5,
          uint8Get/3, uint8Put/4, int8Get/3, int8Put/4,
          uint16Get/3, uint16Put/4, int16Get/3, int16Put/4,
@@ -11,7 +11,7 @@
 
 % helper functions
 % allocate x bytes
-allocate(Capacity) -> << <<0>> || _ <- int_to_list(Capacity) >>.
+allocate(Capacity) -> << <<0>> || _ <- lists:seq(1, Capacity) >>.
 
 checkLimit(Buffer, Limit) -> 
     if Limit > size(Buffer) -> error(limit_beyond_capacity);
@@ -21,10 +21,6 @@ checkLimit(Buffer, Limit) ->
 % chain functions using last argument
 chainFunctions(X, [F_head]) -> F_head(X);
 chainFunctions(X, [F_head|F_tail]) -> chainFunctions(F_head(X), F_tail).
-
-% generate a list of [0, 1,2,...X-1]
-int_to_list(0) -> [];
-int_to_list(X) when X > 0 -> [X-1|int_to_list(X-1)].
 
 % Size is in bits
 % unsigned Put

@@ -1,6 +1,6 @@
 % corresponds to ExampleUsingGeneratedStub.java
 -module(example).
--export([main/0, readJava/0]).
+-export([main/0, readJava/0, encode/2]).
 
 main() ->
     io:format("****** SBE Car example ******", []),
@@ -87,7 +87,7 @@ encode(Buffer, Offset) ->
     Message2 = 
         buffer:chainFunctions(
             Message,
-            [car:setsomeNumbers(X, X) || X <- buffer:int_to_list(car:someNumbersLength())]
+            [car:setsomeNumbers(X, X) || X <- lists:seq(0, car:someNumbersLength() - 1)]
         ),
     
     Message2.

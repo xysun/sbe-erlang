@@ -98,6 +98,12 @@
             <arg value=".*Benchmark.*"/>
         </exec>
     </target>
+    
+    <target name="java:perf" depends="">
+        <java classname="uk.co.real_logic.sbe.CarBenchmark">
+            <classpath refid="perf.build.classpath"/>
+        </java>
+    </target>
 
     <target name="cpp:codegen" depends="init">
         <java classname="uk.co.real_logic.sbe.SbeTool">

@@ -20,6 +20,10 @@ erlangread:
 	$(info [***** Testing Erlang read Java generated file ****])
 	cp java/car_java .; erl -pa src/example/ebin/ -run example readJava -run init stop -noshell
 
+perf:
+	erlc -o src/example/ebin src/example/baselinesimple/carbenchmark.erl
+	erl -pa src/example/ebin -run carbenchmark main -run init stop -noshell
+
 cleanup:
 	$(info [***** Cleaning up... *****])
 	rm car_java; rm car_erlang

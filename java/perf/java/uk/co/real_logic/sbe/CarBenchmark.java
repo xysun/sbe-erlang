@@ -211,7 +211,7 @@ public class CarBenchmark
 
     public static void main(final String[] args)
     {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 5; i++)
         {
             perfTestEncode(i);
             perfTestDecode(i);
