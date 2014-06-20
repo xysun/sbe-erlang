@@ -69,15 +69,15 @@ readJava() ->
 encode(Buffer, Offset) -> 
     SrcOffset = 0, 
     VehicleCode = list_to_binary("abcdef"),
-    Make = list_to_binary("Honda"),
-    Model = list_to_binary("Civic VTi"),
+    Make = <<"Honda">>,
+    Model = <<"Civic Vti">>,
 
     M = car:wrapForEncode(Buffer, Offset),
     M1 = car:setserialNumber(M, 1234),
     M2 = car:setmodelYear(M1, 2023),
     M3 = car:setvehicleCode(M2, VehicleCode, SrcOffset),
-    M4 = car:setmake(M3, Make, SrcOffset, size(Make)),
-    Message = car:setmodel(M4, Model, SrcOffset, size(Model)),
+    M4 = car:setmake(M3, Make, SrcOffset, byte_size(Make)),
+    Message = car:setmodel(M4, Model, SrcOffset, byte_size(Model)),
 
     lists:foldl(fun(X, AccM) -> car:setsomeNumbers(AccM, X, X) end,
                 Message, lists:seq(0, car:someNumbersLength() - 1)).

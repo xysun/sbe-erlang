@@ -2,6 +2,8 @@ all: compile
 
 compile:
 	erl -make
+
+compile-java:
 	cd java/; ant; ant examples:java; cd ../
 
 sbetool:
@@ -9,8 +11,9 @@ sbetool:
 
 javacompatible: example javaread erlangread cleanup
 
-example:
+example: compile
 	$(info [**** Compiling Erlang examples ****])
+	erl -pa ebin/ -run sbetool main schemas/example-schema-simple.xml src/example/ -run init stop -noshell
 	erlc -o src/example/ebin src/example/baselinesimple/*.erl; erl -pa src/example/ebin/ -run example main -run init stop -noshell
 
 javaread:
@@ -27,6 +30,10 @@ perf-erlang:
 
 perf-java:
 	cd java/; ant -f perf-build.xml java:compile; ant -f perf-build.xml java:perf; cd ../
+
+test: compile
+	erlc -o ebin/ test/*.erl
+	erl -pa ebin/ -eval "eunit:test(test_buffer, [verbose])"  -s init stop -noshell
 
 cleanup:
 	$(info [***** Cleaning up... *****])

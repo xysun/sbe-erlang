@@ -1,6 +1,13 @@
 -module(car).
 -compile(export_all).
 
+-record(car, {name="car",
+              serialNumber,
+              modelYear,
+              someNumbers,
+              vehicleCode
+             }).
+
 sbeTemplateId() -> 3.
 sbeSchemaId() -> 2.
 sbeSchemaVersion() -> 0.
@@ -33,6 +40,30 @@ setmodelYear({Buffer, Offset, Limit}, Value) ->
 getmodelYear({Buffer, Offset, Limit}) ->
     buffer:uint16Get(Buffer, Offset + 8, little).
 
+testQuicker({Buffer, Offset, Limit}, SerialNumber, ModelYear) -> 
+    OffsetInBits = 8 * Offset, 
+    case Buffer of 
+        <<Header:OffsetInBits, _:64/integer-unsigned-little, _:16/integer-unsigned-little, Rest/binary>> ->
+        {<<Header:OffsetInBits, SerialNumber:64/integer-unsigned-little, ModelYear:16/integer-unsigned-little, Rest/binary>>, Offset, Limit}
+    end.
+
+setAll({Buffer, Offset, Limit}, SerialNumber, ModelYear, SomeNumbers, VehicleCode) -> 
+    OffsetInBits = 8 * Offset,
+    case Buffer of
+        <<Header:OffsetInBits,
+          _:64/integer-unsigned-little, 
+          _:16/integer-unsigned-little, 
+          _:160/binary,
+          _:48/bitstring,
+          Rest/binary>> ->
+        {<<Header:OffsetInBits,
+         SerialNumber:64/integer-unsigned-little,
+         ModelYear:16/integer-unsigned-little,
+         SomeNumbers:160,
+         VehicleCode:48/bitstring,
+         Rest/binary>>, Offset, Limit}
+    end.
+
 someNumbersLength() -> 5.
 
 getsomeNumbers({Buffer, Offset, Limit}, Index) ->
@@ -58,7 +89,7 @@ getvehicleCode({Buffer, Offset, Limit}, Index) ->
 
 setvehicleCode({Buffer, Offset, Limit}, Value, SrcOffset) ->
     Length = 6,
-    if SrcOffset < 0; SrcOffset > byte_size(Value) - Length
+    if SrcOffset < 0; SrcOffset > size(Value) - Length
         -> error(srcOffset_out_of_range_for_copy);
     true ->
         NewBuffer = buffer:charsPut(Buffer, Offset + 30, Value, SrcOffset, Length),

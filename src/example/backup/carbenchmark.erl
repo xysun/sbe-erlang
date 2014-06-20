@@ -12,7 +12,7 @@ perfEncode() ->
     {ActingBlockLength, SchemaId, ActingVersion} = prepareDecode(MessageBuffer),
     HeaderSize = messageHeader:size(),
     
-    Repeats = 100000,
+    Repeats = 10000,
 
     EncodeStartTime = now(),
     lists:foreach(fun(_) -> encode(EncodeBuffer, HeaderOffset) end, lists:seq(1, Repeats)),
@@ -67,14 +67,19 @@ encode(Buffer, Offset) ->
     Model = <<"Civic VTi">>,
 
     M = car:wrapForEncode(Buffer, Offset),
-    M1 = car:setserialNumber(M, 1234),
-    M2 = car:setmodelYear(M1, 2023),
-    M3 = car:setvehicleCode(M2, VehicleCode, SrcOffset),
+    %M1 = car:setserialNumber(M, 1234),
+    %M2 = car:setmodelYear(M1, 2023),
+    %M2 = car:testQuicker(M, 1234, 2023),
+    %io:format("M2:~w~n", [M2]),
+    %io:format("M5:~w~n", [M5]),
+    %M3 = car:setvehicleCode(M2, VehicleCode, SrcOffset),
+    M3 = car:setAll(M, 1234, 2023, <<0,1,2,3,4>>, <<"abcdef">>),
     M4 = car:setmake(M3, Make, SrcOffset, size(Make)),
     Message = car:setmodel(M4, Model, SrcOffset, size(Model)),
+    Message.
    
-    lists:foldl(fun(X, AccM) -> car:setsomeNumbers(AccM, X, X) end,
-                Message, lists:seq(0, car:someNumbersLength() - 1)).
+    %lists:foldl(fun(X, AccM) -> car:setsomeNumbers(AccM, X, X) end,
+    %            Message, lists:seq(0, car:someNumbersLength() - 1)).
 
 
 decode(Buffer, Offset, ActingBlockLength, SchemaId, ActingVersion) -> 

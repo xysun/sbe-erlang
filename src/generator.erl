@@ -155,7 +155,7 @@ generateFixedLengthString(IoDevice, FieldName, Length, Offset) ->
      io:format(IoDevice,
         "~n~nset~s({Buffer, Offset, Limit}, Value, SrcOffset) ->"
         ++ "~n    Length = ~w,"
-        ++ "~n    if SrcOffset < 0; SrcOffset > size(Value) - Length"
+        ++ "~n    if SrcOffset < 0; SrcOffset > byte_size(Value) - Length"
         ++ "~n        -> error(srcOffset_out_of_range_for_copy);"
         ++ "~n    true ->"
         ++ "~n        NewBuffer = buffer:charsPut(Buffer, Offset + ~w, Value, SrcOffset, Length),"
