@@ -13,8 +13,8 @@ javacompatible: example javaread erlangread cleanup
 
 example: compile
 	$(info [**** Compiling Erlang examples ****])
-	erl -pa ebin/ -run sbetool main schemas/example-schema-simple.xml src/example/ -run init stop -noshell
-	erlc -o src/example/ebin src/example/baselinesimple/*.erl; erl -pa src/example/ebin/ -run example main -run init stop -noshell
+	erl -pa ebin/ -run sbetool main examples/resources/example-schema-simple.xml examples/ -run init stop -noshell
+	erlc -o examples/ebin examples/baselinesimple/*.erl; erl -pa examples/ebin/ -run exampleUsingGeneratedStub main -run init stop -noshell
 
 javaread:
 	$(info [***** Testing Java read erlang generated file ****])
@@ -22,11 +22,11 @@ javaread:
 
 erlangread:
 	$(info [***** Testing Erlang read Java generated file ****])
-	cp java/car_java .; erl -pa src/example/ebin/ -run example readJava -run init stop -noshell
+	cp java/car_java .; erl -pa examples/ebin/ -run exampleUsingGeneratedStub readJava -run init stop -noshell
 
 perf-erlang:
-	erlc -o src/example/ebin src/example/baselinesimple/carbenchmark.erl
-	erl -pa src/example/ebin -run carbenchmark main -run init stop -noshell
+	erlc -o examples/ebin examples/baselinesimple/carbenchmark.erl
+	erl -pa examples/ebin -run carbenchmark main -run init stop -noshell
 
 perf-java:
 	cd java/; ant -f perf-build.xml java:compile; ant -f perf-build.xml java:perf; cd ../
