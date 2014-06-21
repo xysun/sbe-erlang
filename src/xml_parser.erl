@@ -1,11 +1,12 @@
 -module(xml_parser).
--export([parse/2]).
+-export([parse/2, findTypes/1]).
 -include_lib("xmerl/include/xmerl.hrl").
 -include("types.hrl").
 
 findTypes(Node) -> 
     SimpleTypes_XPATH = "/messageSchema/types/type",
-    VarDataTypes_XPATH = "/messageSchema/types/composite[type/@length='0']",
+    %VarDataTypes_XPATH = "/messageSchema/types/composite[type/@length='0']",
+    VarDataTypes_XPATH = "/messageSchema/types/composite[descendant::type[@name='varData']]",
     
     PrimitiveTypeMap = lists:foldl(
         fun(#primitiveType{} = T, Acc) ->  
@@ -17,7 +18,7 @@ findTypes(Node) ->
     
     SimpleTypeMap = lists:foldl(
             fun(D, Acc) ->
-                NewSimpleType = createSimpleType(D),
+                NewSimpleType = createSimpleType(D, PrimitiveTypeMap),
                 Name = dict:fetch(name, D),
                 addTypeWithNameCheck(Name, NewSimpleType, Acc)
             end, PrimitiveTypeMap, SimpleTypeNodes
@@ -42,14 +43,17 @@ addTypeWithNameCheck(Name, Type, TypeMap) ->
     end.
 
 % generate a SimpleType record from an attributes dictionary
-createSimpleType(D) -> 
+createSimpleType(D, PrimitiveTypeMap) -> 
     Name = dict:fetch(name, D), 
-    PrimitiveType = dict:fetch(primitiveType, D),
+    PrimitiveTypeName = dict:fetch(primitiveType, D),
+    PrimitiveType = dict:fetch(PrimitiveTypeName, PrimitiveTypeMap),
     LengthStr = utils:fetchWithDefault(length, D, "1"),
     {Length, _} = string:to_integer(LengthStr),
+    Size = Length * PrimitiveType#primitiveType.size, 
     #simpleType{name = Name, 
-                primitiveType = PrimitiveType,
-                length = Length}.
+                primitiveType = PrimitiveTypeName,
+                length = Length,
+                size = Size}.
 
 createVarDataType(Node) ->
     Attributes = utils:getAttributesDict(Node),

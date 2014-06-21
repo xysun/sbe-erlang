@@ -66,6 +66,7 @@
 -record(simpleType, {name,
                      primitiveType,
                      length=1,
+                     size,
                      characterEncoding=utf8}).
 
 % composite variable length type

@@ -199,7 +199,7 @@ generatePrimitiveArrayMethods(IoDevice, FieldName, PrimitiveType, Length, Offset
 generateMetaFunctions(IoDevice, MessageSchema, MessageAttributes) -> 
     TemplateId = dict:fetch(id, MessageAttributes),
     SchemaId = dict:fetch(id, MessageSchema),
-    SchemaVersion = dict:fetch(version, MessageSchema),
+    SchemaVersion = utils:fetchWithDefault(version, MessageSchema, "0"),
 
     io:format(IoDevice,
         "~n~nsbeTemplateId() -> ~s."

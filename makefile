@@ -1,7 +1,7 @@
 all: compile
 
 compile:
-	erl -make
+	erlc -o ebin/ src/*.erl
 
 compile-java:
 	cd java/; ant; ant examples:java; cd ../
@@ -25,6 +25,7 @@ erlangread:
 	cp java/car_java .; erl -pa examples/ebin/ -run exampleUsingGeneratedStub readJava -run init stop -noshell
 
 perf-erlang:
+	$(info [***** Testing Erlang encode/decode performance *****])
 	erlc -o examples/ebin examples/baselinesimple/carbenchmark.erl
 	erl -pa examples/ebin -run carbenchmark main -run init stop -noshell
 
@@ -34,6 +35,8 @@ perf-java:
 test: compile
 	erlc -o ebin/ test/*.erl
 	erl -pa ebin/ -eval "eunit:test(test_buffer, [verbose])"  -s init stop -noshell
+	erl -pa ebin/ -eval "eunit:test(test_parseschema, [verbose])" -s init stop -noshell
+	erl -pa ebin/ -eval "eunit:test(test_encodeddatatype, [verbose])" -s init stop -noshell
 
 cleanup:
 	$(info [***** Cleaning up... *****])

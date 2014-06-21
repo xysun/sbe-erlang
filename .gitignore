@@ -5,3 +5,4 @@ tmp/
 email
 *fprof*
 *trace*
+test/*test/
