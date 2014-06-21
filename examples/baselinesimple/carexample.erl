@@ -1,5 +1,5 @@
 % corresponds to ExampleUsingGeneratedStub.java
--module(exampleUsingGeneratedStub).
+-module(carexample).
 -export([main/0, readJava/0, encode/2]).
 
 main() ->
