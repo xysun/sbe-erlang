@@ -95,7 +95,7 @@ Please first refer to [this wiki](https://github.com/xysun/sbe-erlang/wiki/Syste
 
 ### Performance
 
-The below benchmark uses the car example (schema can be found [here](https://github.com/xysun/sbe-erlang/blob/master/examples/resources/example-schema-simple.xml) and is generated from a fresh 512MB RAM, 20GB SSD CentOS 6.5 x64 DigitalOcean server. 
+The below benchmark uses the car example (schema can be found [here](https://github.com/xysun/sbe-erlang/blob/master/examples/resources/example-schema-simple.xml)) and is generated from a fresh 512MB RAM, 20GB SSD CentOS 6.5 x64 DigitalOcean server. 
 
 Units are in nanoseconds per operation. 
 
