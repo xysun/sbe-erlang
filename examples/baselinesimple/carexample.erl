@@ -7,8 +7,10 @@ main() ->
     Buffer = buffer:allocate(64),
     BufferOffset = 0,
     MessageTemplateVersion = 0,
-    % encode a message
     
+    % encode a message
+
+    % messageHeader
     M = messageHeader:wrap(Buffer, BufferOffset, MessageTemplateVersion),
     M1 = messageHeader:setBlockLength(M, car:sbeBlockLength()),
     M2 = messageHeader:setTemplateId(M1, car:sbeTemplateId()),
@@ -19,7 +21,7 @@ main() ->
     {EncodeBuffer, _, _} = MessageHeader,
     {MessageBuffer, _, _} = encode(EncodeBuffer, HeaderOffset),
 
-    % optionally write the encoded buffer to a file for decoding
+    % write the encoded buffer to a file for decoding
     file:write_file("car_erlang", MessageBuffer),
 
     % decode the encoded message
@@ -43,6 +45,7 @@ main() ->
     
     ok.
 
+% read and decode the binary encoded by Java implementation
 readJava() -> 
     {ok, Binary} = file:read_file("car_java"),
     MessageHeaderForDecode = messageHeader:wrap(Binary, 0, 0),
@@ -100,7 +103,6 @@ decode(Buffer, Offset, ActingBlockLength, SchemaId, ActingVersion) ->
                       lists:foldl(fun(X, Acc) -> [car:getvehicleCode(Message, X)|Acc] end,
                       [],
                       lists:seq(0, car:vehicleCodeLength() - 1))),
-    %io:format("~p", [VehicleCode]),
     io:format("~ncar.vehicleCode = ~p", [VehicleCode]),
     
     io:format("~ncar.make.semanticType = ~p", [car:makeMetaAttribute(semanticType)]),

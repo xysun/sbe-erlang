@@ -1,3 +1,5 @@
+% generate message stubs from TypeMap and MessageMap parsed by xml_parser
+
 -module(generator).
 -include("types.hrl").
 -include_lib("xmerl/include/xmerl.hrl").
@@ -42,7 +44,6 @@ generateMessageStub(MessageSchema, TypeMap, MessageNode, OutDir) ->
 
 
 % generate methods for variable-length string
-
 generateVarDataMethods(IoDevice, MessageSchema, DataNode, TypeMap) -> 
     Endian = getSchemaEndian(MessageSchema),
     Attributes = utils:getAttributesDict(DataNode),
@@ -66,7 +67,7 @@ generateVarDataMethods(IoDevice, MessageSchema, DataNode, TypeMap) ->
         true -> ok
     end,
 
-    % get
+    % getter
     io:format(IoDevice,
         "~n~nget~s({Buffer, Offset, Limit}, Length) ->"
         ++ "~n    SizeofLengthField = ~w,"
@@ -77,6 +78,7 @@ generateVarDataMethods(IoDevice, MessageSchema, DataNode, TypeMap) ->
         ++ "~n    {{Buffer, Offset, NewLimit}, buffer:charsGet(Buffer, Limit + SizeofLengthField, BytesCopied)}.",
         [Name, LengthFieldSize, LengthPrimitiveTypeName, Endian]),
 
+    % setter
     io:format(IoDevice,
         "~n~nset~s({Buffer, Offset, Limit}, Src, SrcOffset, Length) ->"
         ++ "~n    SizeOfLengthField = ~w,"
@@ -107,16 +109,16 @@ generateFixedLengthMethods(IoDevice, MessageSchema, FieldNode, TypeMap, Offset) 
     %io:format("size:~w~n", [Size]),
     Size.
 
-
+% generate primitiveType methods
 generatePrimitiveTypeMethods(IoDevice, FieldName, Type, Offset, Endian) ->
-
+    % setter
     io:format(IoDevice,
         "~n~nset~s({Buffer, Offset, Limit}, Value) ->"
         ++ "~n   NewBuffer = buffer:~sPut(Buffer, Offset + ~w, Value, ~w),"
         ++ "~n   {NewBuffer, Offset, Limit}.",
         [FieldName, Type#primitiveType.name, Offset, Endian]),
    
-    
+    % getter
     io:format(IoDevice,
         "~n~nget~s({Buffer, Offset, Limit}) ->"
         ++ "~n    buffer:~sGet(Buffer, Offset + ~w, ~w).",
@@ -124,7 +126,7 @@ generatePrimitiveTypeMethods(IoDevice, FieldName, Type, Offset, Endian) ->
     
     Type#primitiveType.size.
 
-
+% generate methods for simple fixed-length data types
 generateSimpleTypeMethods(IoDevice, TypeMap, FieldName, Type, Offset, Endian) ->
     Length = Type#simpleType.length,
     PrimitiveType = dict:fetch(Type#simpleType.primitiveType, TypeMap),
@@ -144,15 +146,17 @@ generateFixedLengthString(IoDevice, FieldName, Length, Offset) ->
     
     io:format(IoDevice,
         "~n~n~sCharacterEncoding() -> utf8.", [FieldName]),
-
+    
+    % getter
     io:format(IoDevice,
         "~n~nget~s({Buffer, Offset, Limit}, Index) ->"
         ++ "~n    if Index < 0; Index >= ~w -> error(index_out_of_range);"
         ++ "~n        true -> buffer:charGet(Buffer, Offset + ~w + (1*Index))"
         ++ "~n    end.",
         [FieldName, Length, Offset]),
-    
-     io:format(IoDevice,
+    % setter
+
+    io:format(IoDevice,
         "~n~nset~s({Buffer, Offset, Limit}, Value, SrcOffset) ->"
         ++ "~n    Length = ~w,"
         ++ "~n    if SrcOffset < 0; SrcOffset > byte_size(Value) - Length"
@@ -163,10 +167,9 @@ generateFixedLengthString(IoDevice, FieldName, Length, Offset) ->
         ++ "~n    end.",
         [FieldName, Length, Offset]),
    
-    
     Length.
 
-% generate primitiveType arrays
+% generate primitiveType arrays, return size used
 generatePrimitiveArrayMethods(IoDevice, FieldName, PrimitiveType, Length, Offset, Endian) -> 
     UnitSize = PrimitiveType#primitiveType.size,
     PrimitiveTypeName = PrimitiveType#primitiveType.name,
@@ -174,14 +177,16 @@ generatePrimitiveArrayMethods(IoDevice, FieldName, PrimitiveType, Length, Offset
     io:format(IoDevice,
         "~n~n~sLength() -> ~w.",
         [FieldName, Length]),
-
+    
+    % getter
     io:format(IoDevice,
         "~n~nget~s({Buffer, Offset, Limit}, Index) ->"
         ++ "~n    if Index < 0; Index >= ~w -> error(index_out_of_range);"
         ++ "~n        true -> buffer:~sGet(Buffer, Offset + ~w + (~w*Index), ~w)"
         ++ "~n    end.",
         [FieldName, Length, PrimitiveTypeName, Offset, UnitSize, Endian]),
-
+    
+    % setter
     io:format(IoDevice,
         "~n~nset~s({Buffer, Offset, Limit}, Index, Value) ->"
         ++ "~n    if Index < 0; Index >= ~w -> erlang:error(index_out_of_range);"
@@ -190,7 +195,6 @@ generatePrimitiveArrayMethods(IoDevice, FieldName, PrimitiveType, Length, Offset
         ++ "~n            {NewBuffer, Offset, Limit}"
         ++ "~n    end.",
         [FieldName, Length, PrimitiveTypeName, Offset, UnitSize, Endian]),
-
     
     Length * UnitSize.
 
@@ -272,6 +276,7 @@ generateMessageHeader(Attributes, OutDir) ->
     file:close(IoDevice),
     lists:map(fun(D) -> dict:fetch(name, D) end, Attributes).
 
+
 generateMessageHeaderMethods(IoDevice, Name, #primitiveType{} = P, Offset, Endian) ->
     % set methods
     io:format(IoDevice,
@@ -286,10 +291,12 @@ generateMessageHeaderMethods(IoDevice, Name, #primitiveType{} = P, Offset, Endia
         ++"~n    buffer:~sGet(Buffer, Offset + ~w, ~w).",
         [Name, P#primitiveType.name, Offset, Endian]).
 
+
 generateFileHeader(IoDevice, ModuleName) -> 
     io:format(IoDevice, "-module(~s).~n-compile(export_all).", [ModuleName]).
 
 
+% get Endian from schema definition, default is littleEndian
 getSchemaEndian(MessageSchema) -> 
     SchemaEndian = utils:fetchWithDefault(byteOrder, MessageSchema, "littleEndian"),
     Endian = case SchemaEndian of

@@ -1,11 +1,13 @@
+% script to benchmark Erlang
+
 -module(carbenchmark).
 -compile(export_all).
 
 
 main() -> 
-    lists:foreach(fun(_) -> perfEncode() end, lists:seq(1, 5)).
+    lists:foreach(fun(_) -> perf() end, lists:seq(1, 5)).
 
-perfEncode() -> 
+perf() -> 
     {EncodeBuffer, HeaderOffset} = prepareEncode(),
     {MessageBuffer, _, _} = encode(EncodeBuffer, HeaderOffset),
 
@@ -13,13 +15,15 @@ perfEncode() ->
     HeaderSize = messageHeader:size(),
     
     Repeats = 100000,
-
+    
+    % benchmark encode
     EncodeStartTime = now(),
     lists:foreach(fun(_) -> encode(EncodeBuffer, HeaderOffset) end, lists:seq(1, Repeats)),
     EncodeEndTime = now(),
     EncodeTimeDiff = timeDiff(EncodeStartTime, EncodeEndTime)/Repeats,
     io:format("~nencoding...~fns per operation~n", [1000*EncodeTimeDiff]),
     
+    % benchmark decode 
     DecodeStartTime = now(),
     lists:foreach(fun(_) -> decode(MessageBuffer, HeaderSize, ActingBlockLength, SchemaId, ActingVersion) end, lists:seq(1, Repeats)),
     DecodeEndTime = now(),
@@ -28,7 +32,7 @@ perfEncode() ->
     
     ok.
 
-
+% return time difference in microseconds
 timeDiff({S1, S2, S3}, {E1, E2, E3}) -> 
     TotalMs1 = 1000000*(S1*1000000+S2) + S3,
     TotalMs2 = 1000000*(E1*1000000+E2) + E3,
@@ -42,7 +46,6 @@ prepareDecode(MessageBuffer) ->
     ActingVersion = messageHeader:getVersion(MessageHeaderForDecode),
     {ActingBlockLength, SchemaId, ActingVersion}.
 
-   
 
 prepareEncode() -> 
     Buffer = buffer:allocate(64),

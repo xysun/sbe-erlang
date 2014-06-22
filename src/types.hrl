@@ -1,3 +1,5 @@
+% types header used in SBE toolchain
+
 % primitiveTypes
 -record(primitiveType, {name,
                          size,

@@ -10,11 +10,12 @@ capfirst([H|T]) when H >= $a, H =< $z ->
 capfirst(Other) -> Other.
 
 
-% force first letter to be lowercase
+% lowercase first letter
 lowerfirst([H|T]) when H >= $A, H =< $Z ->
     [H - ($A - $a) | T];
 lowerfirst(Other) -> Other.
 
+% save all attributes of an xml node to a dict
 getAttributesDict(Node) -> 
     lists:foldl(
         fun(#xmlAttribute{} = T, Dict) -> dict:store(T#xmlAttribute.name, T#xmlAttribute.value, Dict) end,

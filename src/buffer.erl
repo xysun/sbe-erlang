@@ -13,6 +13,7 @@
 % allocate x bytes
 allocate(Capacity) -> << <<0>> || _ <- lists:seq(1, Capacity) >>.
 
+% check buffer size
 checkLimit(Buffer, Limit) -> 
     if Limit > size(Buffer) -> error(limit_beyond_capacity);
        true -> ok

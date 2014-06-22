@@ -1,8 +1,12 @@
+% xml parser
+% generate TypeMap and MessageMap for generator.erl to generate message stubs
+
 -module(xml_parser).
 -export([parse/2, findTypes/1]).
 -include_lib("xmerl/include/xmerl.hrl").
 -include("types.hrl").
 
+% return a TypeMap by type name
 findTypes(Node) -> 
     SimpleTypes_XPATH = "/messageSchema/types/type",
     %VarDataTypes_XPATH = "/messageSchema/types/composite[type/@length='0']",
@@ -55,6 +59,7 @@ createSimpleType(D, PrimitiveTypeMap) ->
                 length = Length,
                 size = Size}.
 
+% generate a composite variable-length string record from a <composite> node
 createVarDataType(Node) ->
     Attributes = utils:getAttributesDict(Node),
     Name = dict:fetch(name, Attributes),
@@ -65,7 +70,7 @@ createVarDataType(Node) ->
     #varDataType{name = Name,
                  lengthPrimitiveType = dict:fetch(primitiveType, LengthNodeAttributes)}.
 
-% find messages in xml and store in messageMap
+% find messages in xml and store in messageMap, key is message ID.
 findMessages(Node) ->
     Messages_XPATH = "/messageSchema/message",
     MessageNodes= xmerl_xpath:string(Messages_XPATH, Node),
@@ -80,14 +85,14 @@ findMessages(Node) ->
         end, dict:new(), MessageNodes
     ).
 
-
+% add message to the MessageMap with ID check
 addMessageWithIDCheck(Id, Node, MessageMap) -> 
     IdInMap = dict:is_key(Id, MessageMap),
     if IdInMap -> error(message_ID_already_exists);
        true -> dict:store(Id, Node, MessageMap)
     end.
 
-
+% main parse function
 parse(Filename, OutDir) -> 
     {Root, _} = xmerl_scan:file(Filename),
 
@@ -102,12 +107,12 @@ parse(Filename, OutDir) ->
     MessageHeaderAttributes = getAttributesFromXpath(Root, MessageHeader_XPATH),
     generator:generateMessageHeader(MessageHeaderAttributes, SubDirName),
     
-    %create typeMap and messageMap
+    %create typeMap and messageMap, pass to generator
     TypeMap = findTypes(Root),
     MessageMap = findMessages(Root),
     generator:generate(MessageSchema, TypeMap, MessageMap, SubDirName),
 
-    TypeMap.
+    ok.
 
 % return a {name:value} attribute dicts for each matching element
 getAttributesFromXpath(Node, Xpath) -> 
