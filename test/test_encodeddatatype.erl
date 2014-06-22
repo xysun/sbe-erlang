@@ -45,12 +45,12 @@ primitive_type_size_test() ->
     {Root, _} = xmerl_scan:string(Xmlstring),
     TypeMap = xml_parser:findTypes(Root),
     
-    TypeChar   = dict:fetch("testTypeChar", TypeMap),
-    TypeInt8   =  dict:fetch("testTypeInt8", TypeMap),
-    TypeInt16  = dict:fetch("testTypeInt16", TypeMap),
-    TypeInt32  = dict:fetch("testTypeInt32", TypeMap),
-    TypeInt64  = dict:fetch("testTypeInt64", TypeMap),
-    TypeUInt8  = dict:fetch("testTypeUInt8", TypeMap),
+    TypeChar   = dict:fetch("testTypeChar",   TypeMap),
+    TypeInt8   = dict:fetch("testTypeInt8",   TypeMap),
+    TypeInt16  = dict:fetch("testTypeInt16",  TypeMap),
+    TypeInt32  = dict:fetch("testTypeInt32",  TypeMap),
+    TypeInt64  = dict:fetch("testTypeInt64",  TypeMap),
+    TypeUInt8  = dict:fetch("testTypeUInt8",  TypeMap),
     TypeUInt16 = dict:fetch("testTypeUInt16", TypeMap),
     TypeUInt32 = dict:fetch("testTypeUInt32", TypeMap),
     TypeUInt64 = dict:fetch("testTypeUInt64", TypeMap),
@@ -66,5 +66,3 @@ primitive_type_size_test() ->
     ?assertEqual(TypeUInt64#simpleType.size, 8).
 
 
-% should return correct semanticType
-    

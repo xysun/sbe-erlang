@@ -47,7 +47,7 @@ Please first refer to [this wiki](https://github.com/xysun/sbe-erlang/wiki/Syste
 * Clone the repo: 
 
     ```
-    git clone https://github.com/xysun/sbe-erlang.git
+    git clone git@github.com:xysun/sbe-erlang.git
     ```
 
 * Full clean build of both Erlang and Java
@@ -109,11 +109,11 @@ As can be seen from the table speed of SBE-Erlang is comparable to Protobuff Jav
 
 The major bottleneck for SBE-Erlang's performance is due to the fact that Erlang is a functional language and directly manipulating buffers is not allowed. As a result everytime a `setSomeProperty` method is called a new binary buffer is allocated with the newly added data. This clearly violates the Copy-Free and Allocation-Free [design principles](https://github.com/real-logic/simple-binary-encoding/wiki/Design-Principles) of SBE. 
 
-It is however possible to improve the performance by providing a `setAll` method that will set all fixed-length blocks in one method call, since all data types and lengths are known from the schema file, thus only allocating once. A preliminary testing showed that encoding speed could be brought down by another 1000ns. Adding this feature is a work-in-process. 
+It is however possible to improve the performance by providing a `setAll` method that will set all fixed-length blocks in one method call, since all data types and lengths are known from the schema file, thus only allocating once. A preliminary testing showed that encoding speed could be brought down by another 1000ns. Adding this feature is a work-in-progress. 
 
 ### API Documentation
 
-Please check [this wiki]() for the API documentation. 
+Please check [this wiki](https://github.com/xysun/sbe-erlang/wiki/Erlang-Users-Guide) for the API documentation. 
 
 ### Todo
 
