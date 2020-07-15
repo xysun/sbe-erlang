@@ -1,0 +1,2 @@
+*.cs linguist-language=erlang
+*.java linguist-language=erlang
